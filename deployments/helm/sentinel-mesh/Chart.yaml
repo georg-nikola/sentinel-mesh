@@ -1,0 +1,39 @@
+apiVersion: v2
+name: sentinel-mesh
+description: A Helm chart for Sentinel Mesh - Distributed system monitoring with predictive security intelligence
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/sentinel-mesh/sentinel-mesh
+sources:
+  - https://github.com/sentinel-mesh/sentinel-mesh
+maintainers:
+  - name: Sentinel Mesh Team
+    email: team@sentinel-mesh.io
+keywords:
+  - monitoring
+  - kubernetes
+  - observability
+  - anomaly-detection
+  - machine-learning
+  - security
+  - sre
+annotations:
+  category: Monitoring
+dependencies:
+  - name: kafka
+    version: "~21.4.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: kafka.enabled
+  - name: redis
+    version: "~17.11.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+  - name: influxdb
+    version: "~4.12.0"
+    repository: "https://helm.influxdata.com/"
+    condition: influxdb.enabled
+  - name: elasticsearch
+    version: "~8.5.0"
+    repository: "https://helm.elastic.co"
+    condition: elasticsearch.enabled
