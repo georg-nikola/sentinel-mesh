@@ -1,0 +1,360 @@
+# Default values for sentinel-mesh
+# This is a YAML-formatted file.
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+  clusterDomain: cluster.local
+
+# Image configuration
+image:
+  registry: docker.io
+  repository: sentinel-mesh/sentinel-mesh
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Service account configuration
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# RBAC configuration
+rbac:
+  create: true
+  rules: []
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 1001
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# Security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# Collector service configuration
+collector:
+  enabled: true
+  replicaCount: 3
+  
+  image:
+    repository: sentinel-mesh/collector
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    annotations: {}
+  
+  env:
+    - name: LOG_LEVEL
+      value: "info"
+    - name: METRICS_PORT
+      value: "9090"
+
+# Processor service configuration
+processor:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: sentinel-mesh/processor
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Analyzer service configuration
+analyzer:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: sentinel-mesh/analyzer
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 300m
+      memory: 512Mi
+  
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# ML service configuration
+ml:
+  enabled: true
+  replicaCount: 1
+  
+  image:
+    repository: sentinel-mesh/ml-service
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  
+  service:
+    type: ClusterIP
+    port: 5000
+    targetPort: 5000
+    annotations: {}
+  
+  # ML model persistence
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    annotations: {}
+
+# API service configuration
+api:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: sentinel-mesh/api
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    annotations: {}
+  
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Frontend service configuration
+frontend:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: sentinel-mesh/frontend
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 80
+    annotations: {}
+  
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: sentinel-mesh.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: sentinel-mesh-tls
+  #    hosts:
+  #      - sentinel-mesh.local
+
+# Configuration
+config:
+  # Kafka configuration
+  kafka:
+    enabled: true
+    brokers:
+      - kafka:9092
+    topics:
+      metrics: "metrics"
+      logs: "logs"
+      alerts: "alerts"
+    groupId: "sentinel-mesh"
+  
+  # Redis configuration
+  redis:
+    enabled: true
+    host: "redis-master"
+    port: 6379
+    database: 0
+    password: ""
+  
+  # InfluxDB configuration
+  influxdb:
+    enabled: true
+    url: "http://influxdb:8086"
+    org: "sentinel-mesh"
+    bucket: "metrics"
+    token: ""
+  
+  # Elasticsearch configuration
+  elasticsearch:
+    enabled: true
+    hosts:
+      - "http://elasticsearch:9200"
+    index: "sentinel-logs"
+    username: ""
+    password: ""
+  
+  # Monitoring configuration
+  monitoring:
+    prometheus:
+      enabled: true
+      port: 9090
+      path: "/metrics"
+    jaeger:
+      enabled: false
+      endpoint: "http://jaeger:14268/api/traces"
+  
+  # Security configuration
+  security:
+    jwt:
+      secret: ""
+      expiry: "24h"
+    cors:
+      enabled: true
+      origins:
+        - "*"
+
+# External dependencies
+kafka:
+  enabled: true
+  replicaCount: 3
+  heapOpts: "-Xmx1024M -Xms1024M"
+  
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+
+influxdb:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 20Gi
+  config:
+    reporting-disabled: false
+
+elasticsearch:
+  enabled: true
+  replicas: 3
+  persistence:
+    enabled: true
+    size: 30Gi
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# Network Policies
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: []
+
+# Monitoring and observability
+serviceMonitor:
+  enabled: false
+  namespace: ""
+  labels: {}
+  interval: 30s
+  scrapeTimeout: 10s
+
+# Pod annotations
+podAnnotations: {}
+
+# Pod labels
+podLabels: {}
