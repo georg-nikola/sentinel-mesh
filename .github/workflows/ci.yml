@@ -224,11 +224,34 @@ jobs:
           type=sha
           type=raw,value=latest,enable={{is_default_branch}}
     
+    - name: Determine Dockerfile
+      id: dockerfile
+      run: |
+        case "${{ matrix.service }}" in
+          collector|processor|analyzer|alerting|api)
+            echo "dockerfile=Dockerfile.golang" >> $GITHUB_OUTPUT
+            echo "build_arg=SERVICE=${{ matrix.service }}" >> $GITHUB_OUTPUT
+            ;;
+          ml-service)
+            echo "dockerfile=Dockerfile.python" >> $GITHUB_OUTPUT
+            echo "build_arg=" >> $GITHUB_OUTPUT
+            ;;
+          frontend)
+            echo "dockerfile=Dockerfile.web" >> $GITHUB_OUTPUT
+            echo "build_arg=" >> $GITHUB_OUTPUT
+            ;;
+        esac
+
     - name: Build and push
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: ./deployments/docker/Dockerfile.${{ matrix.service }}
+        file: ./deployments/docker/${{ steps.dockerfile.outputs.dockerfile }}
+        build-args: |
+          ${{ steps.dockerfile.outputs.build_arg }}
+          VERSION=${{ github.sha }}
+          BUILD_TIME=${{ github.event.head_commit.timestamp }}
+          GIT_COMMIT=${{ github.sha }}
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
@@ -259,45 +282,46 @@ jobs:
           --dry-run || true
 
   # Deploy to staging (only on main branch)
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [build-images, test-helm]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: staging
+  # Disabled: No staging environment configured
+  # deploy-staging:
+  #   name: Deploy to Staging
+  #   runs-on: ubuntu-latest
+  #   needs: [build-images, test-helm]
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   environment: staging
     
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Helm
-      uses: azure/setup-helm@v3
-      with:
-        version: '3.12.0'
-    
-    - name: Configure kubectl
-      run: |
-        echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > kubeconfig
-        export KUBECONFIG=kubeconfig
-    
-    - name: Deploy to staging
-      run: |
-        export KUBECONFIG=kubeconfig
-        helm upgrade --install sentinel-mesh deployments/helm/sentinel-mesh \
-          --namespace sentinel-mesh-staging \
-          --create-namespace \
-          --values deployments/helm/sentinel-mesh/values-staging.yaml \
-          --set image.tag=sha-${GITHUB_SHA::7}
-    
-    - name: Run smoke tests
-      run: |
-        export KUBECONFIG=kubeconfig
-        kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=sentinel-mesh \
-          --namespace sentinel-mesh-staging --timeout=300s
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #
+  #   - name: Set up Helm
+  #     uses: azure/setup-helm@v3
+  #     with:
+  #       version: '3.12.0'
+  #
+  #   - name: Configure kubectl
+  #     run: |
+  #       echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > kubeconfig
+  #       export KUBECONFIG=kubeconfig
+  #
+  #   - name: Deploy to staging
+  #     run: |
+  #       export KUBECONFIG=kubeconfig
+  #       helm upgrade --install sentinel-mesh deployments/helm/sentinel-mesh \
+  #         --namespace sentinel-mesh-staging \
+  #         --create-namespace \
+  #         --values deployments/helm/sentinel-mesh/values-staging.yaml \
+  #         --set image.tag=sha-${GITHUB_SHA::7}
+  #
+  #   - name: Run smoke tests
+  #     run: |
+  #       export KUBECONFIG=kubeconfig
+  #       kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=sentinel-mesh \
+  #         --namespace sentinel-mesh-staging --timeout=300s
+  #
+  #       # Run basic health checks
+  #       kubectl get pods -n sentinel-mesh-staging
         
-        # Run basic health checks
-        kubectl get pods -n sentinel-mesh-staging
-        
-        # Test API endpoints
-        kubectl port-forward -n sentinel-mesh-staging svc/sentinel-mesh-api 8080:8080 &
-        sleep 10
-        curl -f http://localhost:8080/health || exit 1
+  #       # Test API endpoints
+  #       kubectl port-forward -n sentinel-mesh-staging svc/sentinel-mesh-api 8080:8080 &
+  #       sleep 10
+  #       curl -f http://localhost:8080/health || exit 1
