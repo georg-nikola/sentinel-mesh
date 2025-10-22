@@ -11,6 +11,7 @@ import (
 // Config holds the application configuration
 type Config struct {
 	Server     ServerConfig     `mapstructure:"server"`
+	API        ServerConfig     `mapstructure:"api"`
 	Database   DatabaseConfig   `mapstructure:"database"`
 	Kafka      KafkaConfig      `mapstructure:"kafka"`
 	Redis      RedisConfig      `mapstructure:"redis"`
@@ -194,6 +195,13 @@ func setDefaults() {
 	viper.SetDefault("server.read_timeout", "30s")
 	viper.SetDefault("server.write_timeout", "30s")
 	viper.SetDefault("server.idle_timeout", "120s")
+
+	// API defaults (same as server)
+	viper.SetDefault("api.host", "0.0.0.0")
+	viper.SetDefault("api.port", 8080)
+	viper.SetDefault("api.read_timeout", "30s")
+	viper.SetDefault("api.write_timeout", "30s")
+	viper.SetDefault("api.idle_timeout", "120s")
 
 	// Database defaults
 	viper.SetDefault("database.influxdb.url", "http://localhost:8086")
