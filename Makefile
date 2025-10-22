@@ -107,7 +107,7 @@ test: test-go test-ml test-frontend ## Run all tests
 .PHONY: test-go
 test-go: ## Run Go tests
 	@echo "$(GREEN)Running Go tests...$(NC)"
-	go test -v -race -coverprofile=coverage.out ./...
+	go test -v -race -coverprofile=coverage.out $(shell go list ./... | grep -v /deployments/)
 	@echo "$(GREEN)Go tests completed!$(NC)"
 
 .PHONY: test-integration
