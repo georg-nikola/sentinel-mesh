@@ -20,9 +20,7 @@ class PredictiveScaler:
         self.model = "loaded"
 
     def predict_resource_needs(
-        self,
-        historical_metrics: List[Dict[str, Any]],
-        horizon_hours: int = 24
+        self, historical_metrics: List[Dict[str, Any]], horizon_hours: int = 24
     ) -> Dict[str, Any]:
         """
         Predict future resource needs.
@@ -44,12 +42,14 @@ class PredictiveScaler:
             predicted_cpu = 45.0 + np.random.normal(0, 5)
             predicted_memory = 60.0 + np.random.normal(0, 8)
 
-            predictions.append({
-                "timestamp": timestamp.isoformat(),
-                "predicted_cpu_percent": max(0, min(100, predicted_cpu)),
-                "predicted_memory_percent": max(0, min(100, predicted_memory)),
-                "confidence": 0.85 + np.random.normal(0, 0.05)
-            })
+            predictions.append(
+                {
+                    "timestamp": timestamp.isoformat(),
+                    "predicted_cpu_percent": max(0, min(100, predicted_cpu)),
+                    "predicted_memory_percent": max(0, min(100, predicted_memory)),
+                    "confidence": 0.85 + np.random.normal(0, 0.05),
+                }
+            )
 
         # Determine scaling recommendation
         max_cpu = max(p["predicted_cpu_percent"] for p in predictions)
@@ -67,13 +67,11 @@ class PredictiveScaler:
             "recommended_action": scaling_action,
             "peak_cpu_predicted": max_cpu,
             "peak_memory_predicted": max_memory,
-            "confidence_score": 0.87
+            "confidence_score": 0.87,
         }
 
     def get_scaling_schedule(
-        self,
-        workload_name: str,
-        historical_metrics: List[Dict[str, Any]]
+        self, workload_name: str, historical_metrics: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """
         Generate optimal scaling schedule based on patterns.
@@ -85,20 +83,20 @@ class PredictiveScaler:
                 "time": "06:00",
                 "action": "scale_up",
                 "replicas": 5,
-                "reason": "Morning traffic surge expected"
+                "reason": "Morning traffic surge expected",
             },
             {
                 "time": "12:00",
                 "action": "scale_up",
                 "replicas": 8,
-                "reason": "Peak usage period"
+                "reason": "Peak usage period",
             },
             {
                 "time": "20:00",
                 "action": "scale_down",
                 "replicas": 3,
-                "reason": "Off-peak hours"
-            }
+                "reason": "Off-peak hours",
+            },
         ]
 
         return schedule
