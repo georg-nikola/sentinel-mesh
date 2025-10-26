@@ -26,18 +26,24 @@ fi
 echo "Using frontend pod: $FRONTEND_POD"
 echo ""
 
-# Test frontend is accessible
+# Test frontend is accessible via NodePort
 echo "Frontend Accessibility:"
-FRONTEND_RESPONSE=$(kubectl exec -n $NAMESPACE $FRONTEND_POD -- wget -q -O- --timeout=5 http://localhost:8080/ 2>/dev/null || echo "FAILED")
-
-if [[ "$FRONTEND_RESPONSE" == "FAILED" ]]; then
-    echo -e "  ${RED}✗${NC} Failed to connect to frontend"
+NODE_PORT=$(kubectl get svc web-dashboard -n $NAMESPACE -o jsonpath='{.spec.ports[0].nodePort}')
+if [ -z "$NODE_PORT" ]; then
+    echo -e "  ${RED}✗${NC} NodePort not found"
     ((FAILED++))
-elif echo "$FRONTEND_RESPONSE" | grep -qi "<!DOCTYPE html>"; then
-    echo -e "  ${GREEN}✓${NC} Frontend returns HTML"
 else
-    echo -e "  ${RED}✗${NC} Invalid HTML response"
-    ((FAILED++))
+    FRONTEND_RESPONSE=$(curl -s --max-time 5 http://localhost:$NODE_PORT/ 2>/dev/null || echo "FAILED")
+
+    if [[ "$FRONTEND_RESPONSE" == "FAILED" ]]; then
+        echo -e "  ${RED}✗${NC} Failed to connect to frontend on port $NODE_PORT"
+        ((FAILED++))
+    elif echo "$FRONTEND_RESPONSE" | grep -qi "<!DOCTYPE html>"; then
+        echo -e "  ${GREEN}✓${NC} Frontend returns HTML on port $NODE_PORT"
+    else
+        echo -e "  ${RED}✗${NC} Invalid HTML response"
+        ((FAILED++))
+    fi
 fi
 echo ""
 
