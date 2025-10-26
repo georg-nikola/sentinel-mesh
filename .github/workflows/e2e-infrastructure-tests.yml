@@ -36,24 +36,29 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Create kind config
+        run: |
+          cat > /tmp/kind-config.yaml <<EOF
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          nodes:
+          - role: control-plane
+            extraPortMappings:
+            - containerPort: 30000
+              hostPort: 30000
+              protocol: TCP
+            - containerPort: 30090
+              hostPort: 30090
+              protocol: TCP
+          EOF
+
       - name: Create kind cluster
         uses: helm/kind-action@v1
         with:
           cluster_name: sentinel-mesh-test
           node_image: kindest/node:v1.28.0
           wait: 300s
-          config: |
-            kind: Cluster
-            apiVersion: kind.x-k8s.io/v1alpha4
-            nodes:
-            - role: control-plane
-              extraPortMappings:
-              - containerPort: 30000
-                hostPort: 30000
-                protocol: TCP
-              - containerPort: 30090
-                hostPort: 30090
-                protocol: TCP
+          config: /tmp/kind-config.yaml
 
       - name: Verify cluster
         run: |
