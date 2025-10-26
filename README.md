@@ -1,5 +1,5 @@
 # Sentinel Mesh
-> Distributed system monitoring with predictive security intelligence
+> A personal hobby project exploring distributed system monitoring with predictive security intelligence
 
 [![Go Version](https://img.shields.io/badge/go-1.21+-blue.svg)](https://golang.org)
 [![Vue.js](https://img.shields.io/badge/vue.js-3.x-green.svg)](https://vuejs.org)
@@ -10,6 +10,8 @@
 ## Overview
 
 Sentinel Mesh is a cloud-native distributed system monitoring platform that combines real-time observability with machine learning-powered security intelligence. Built for Kubernetes environments, it provides comprehensive monitoring, anomaly detection, and automated incident response capabilities.
+
+> **Personal Project**: This is a hobby project developed for learning and experimentation with Kubernetes, microservices, Vue.js, and ML-powered observability. While functional, it's not intended for production use.
 
 ## 🚀 Key Features
 
@@ -116,17 +118,13 @@ Sentinel Mesh is a cloud-native distributed system monitoring platform that comb
 
 #### 1. Deploy with Helm
 ```bash
-# Add Sentinel Mesh repository
-helm repo add sentinel-mesh https://charts.sentinel-mesh.io
-helm repo update
-
-# Install with default configuration
-helm install sentinel-mesh sentinel-mesh/sentinel-mesh \
+# Install from local chart
+helm install sentinel-mesh ./deployments/helm/sentinel-mesh \
   --namespace sentinel-mesh \
   --create-namespace
 
 # Install with custom values
-helm install sentinel-mesh sentinel-mesh/sentinel-mesh \
+helm install sentinel-mesh ./deployments/helm/sentinel-mesh \
   --namespace sentinel-mesh \
   --create-namespace \
   --values values-production.yaml
@@ -199,7 +197,7 @@ ml:
 
 #### 1. Clone Repository
 ```bash
-git clone https://github.com/your-org/sentinel-mesh.git
+git clone https://github.com/georg-nikola/sentinel-mesh.git
 cd sentinel-mesh
 ```
 
@@ -296,42 +294,47 @@ sentinel-mesh/
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+Contributions are welcome! This is a learning project, so feel free to experiment and propose improvements.
 
-### Development Workflow
+### How to Contribute
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Add tests for new functionality
-5. Run the test suite
-6. Submit a pull request
+4. Add tests if applicable
+5. Ensure tests pass (`./tests/e2e/run-all.sh`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to your fork (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
 
-### Code Standards
-- Go: Follow `gofmt` and `golint` standards
-- Python: PEP 8 compliance
-- JavaScript/TypeScript: ESLint configuration
-- Documentation: Keep README and docs updated
+### Code Style
+- **Go**: Use `gofmt` and follow standard Go conventions
+- **Python**: Follow PEP 8, format with Black
+- **TypeScript/Vue**: Follow ESLint rules (see `.eslintrc`)
+- **Commits**: Use conventional commit format when possible (e.g., `feat:`, `fix:`, `docs:`)
 
 ## 📜 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 📚 Documentation
 
-### Documentation
-- [Architecture Guide](docs/architecture/README.md)
-- [API Documentation](docs/api/README.md)
-- [Deployment Guide](docs/deployment/README.md)
-- [Troubleshooting](docs/troubleshooting.md)
+- [E2E Test Plan](docs/E2E_TEST_PLAN.md) - Comprehensive testing strategy
+- [E2E Test Results](docs/E2E_TEST_RESULTS.md) - Latest test execution results
+- [CLAUDE.md](CLAUDE.md) - Development guide for Claude Code
+- [CHANGELOG.md](CHANGELOG.md) - Release history and changes
 
-### Community
-- [GitHub Issues](https://github.com/your-org/sentinel-mesh/issues)
-- [Discussions](https://github.com/your-org/sentinel-mesh/discussions)
-- [Slack Channel](https://sentinel-mesh.slack.com)
+## 🐛 Issues & Contributions
 
-### Commercial Support
-For enterprise support, please contact: support@sentinel-mesh.io
+This is a personal hobby project, but contributions are welcome!
+
+- [Report Issues](https://github.com/georg-nikola/sentinel-mesh/issues)
+- [View Source](https://github.com/georg-nikola/sentinel-mesh)
+- [Latest Release](https://github.com/georg-nikola/sentinel-mesh/releases)
+
+Feel free to fork, experiment, and submit pull requests!
 
 ---
 
-**Sentinel Mesh** - *Monitoring the future of distributed systems*
+**Sentinel Mesh** - *A personal project exploring Kubernetes monitoring and ML-powered observability*
+
+> **Note**: This is a hobby project under active development. Not recommended for production use.
