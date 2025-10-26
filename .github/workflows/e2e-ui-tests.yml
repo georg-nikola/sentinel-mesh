@@ -1,0 +1,89 @@
+name: E2E UI Tests (Playwright)
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  playwright-tests:
+    name: Playwright UI Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: tests/e2e-ui/package-lock.json
+
+      - name: Install Playwright dependencies
+        working-directory: tests/e2e-ui
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: tests/e2e-ui
+        run: npx playwright install chromium --with-deps
+
+      # For now, test against development server with mock data
+      # TODO: Later integrate with kind cluster for full E2E testing
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Start development server
+        working-directory: web
+        run: |
+          npm run dev &
+          echo $! > /tmp/dev-server.pid
+
+          # Wait for server to start
+          timeout 60 bash -c 'until curl -s http://localhost:5173 > /dev/null; do sleep 2; done'
+
+      - name: Run Playwright tests
+        working-directory: tests/e2e-ui
+        run: npm test
+        env:
+          BASE_URL: http://localhost:5173
+          CI: true
+
+      - name: Stop development server
+        if: always()
+        run: |
+          if [ -f /tmp/dev-server.pid ]; then
+            kill $(cat /tmp/dev-server.pid) || true
+          fi
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tests/e2e-ui/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: tests/e2e-ui/test-results.json
+          retention-days: 30
+
+      - name: Upload failure screenshots and videos
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failures
+          path: tests/e2e-ui/test-results/
+          retention-days: 7
