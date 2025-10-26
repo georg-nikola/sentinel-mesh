@@ -1,0 +1,144 @@
+# Qodo Merge (PR-Agent) Configuration
+# https://qodo-merge-docs.qodo.ai/
+
+[config]
+# Model configuration
+model = "gpt-4o"
+model_turbo = "gpt-4o-mini"
+
+[pr_reviewer]
+# Enable automatic PR review
+enabled = true
+# Require security review for all PRs
+require_security_review = true
+# Require performance review
+require_performance_review = true
+# Require tests review
+require_tests_review = true
+# Number of code suggestions to generate
+num_code_suggestions = 4
+# Auto-review on PR creation
+auto_review = true
+# Inline comments
+inline_code_comments = true
+# Review labels
+add_labels = true
+
+[pr_code_suggestions]
+# Enable automatic code suggestions
+enabled = true
+# Number of suggestions per PR
+num_code_suggestions = 4
+# Commit suggestions automatically
+auto_commit_suggestions = false
+# Suggestions mode: "review_only" or "commit"
+suggestions_mode = "review_only"
+
+[pr_description]
+# Auto-generate PR descriptions
+enabled = true
+# Use conventional commits format
+use_conventional_commits = true
+# Add PR type (feature/fix/docs/etc)
+add_pr_type = true
+# Add walkthrough section
+add_walkthrough = true
+# Add original user description
+add_original_user_description = true
+# Enable ticket compliance check
+enable_semantic_files_types = true
+
+[pr_questions]
+# Enable PR questions answering
+enabled = true
+
+[pr_test]
+# Generate test suggestions
+enabled = true
+# Testing framework detection
+testing_framework = "auto"
+
+[pr_improve]
+# Code improvement suggestions
+enabled = true
+# Extended mode with more suggestions
+extended_mode = true
+
+[pr_update_changelog]
+# Auto-update CHANGELOG.md
+enabled = true
+
+[pr_add_docs]
+# Documentation suggestions
+enabled = true
+
+[pr_similar_issue]
+# Find similar issues/PRs
+enabled = true
+# Number of similar items to show
+number_of_issues = 5
+
+[code_review_prompts]
+# Custom review prompts
+security = [
+    "Check for SQL injection vulnerabilities",
+    "Verify input validation and sanitization",
+    "Check for hardcoded secrets or credentials",
+    "Review authentication and authorization logic",
+]
+
+performance = [
+    "Check for inefficient database queries",
+    "Review memory usage and potential leaks",
+    "Check for unnecessary loops or iterations",
+    "Review caching strategies",
+]
+
+best_practices = [
+    "Check code follows language-specific best practices",
+    "Verify error handling is comprehensive",
+    "Check logging is appropriate and not excessive",
+    "Review code maintainability and readability",
+]
+
+testing = [
+    "Verify unit tests cover new functionality",
+    "Check for edge cases in tests",
+    "Review test readability and maintainability",
+    "Check for integration test coverage",
+]
+
+[github]
+# GitHub-specific settings
+publish_review = true
+publish_inline_comments = true
+# Auto-approve safe PRs (dependency updates, docs)
+auto_approve = false
+
+[language_specific]
+# Go-specific settings
+[language_specific.go]
+code_suggestions = true
+require_error_handling_review = true
+
+# Python-specific settings
+[language_specific.python]
+code_suggestions = true
+require_type_hints = false
+
+# JavaScript/TypeScript-specific settings
+[language_specific.javascript]
+code_suggestions = true
+require_typescript = false
+
+[language_specific.typescript]
+code_suggestions = true
+require_strict_mode = true
+
+[bitbucket]
+# Not using Bitbucket
+enabled = false
+
+[gitlab]
+# Not using GitLab
+enabled = false
