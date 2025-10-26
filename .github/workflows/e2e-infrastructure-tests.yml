@@ -71,16 +71,16 @@ jobs:
           # Build API service
           docker build -t sentinel-mesh/api:test \
             --build-arg SERVICE=api \
-            -f Dockerfile .
+            -f deployments/docker/Dockerfile.golang .
 
           # Build Collector service
           docker build -t sentinel-mesh/collector:test \
             --build-arg SERVICE=collector \
-            -f Dockerfile .
+            -f deployments/docker/Dockerfile.golang .
 
           # Build ML Service
           docker build -t sentinel-mesh/ml-service:test \
-            -f ml/Dockerfile ml/
+            -f deployments/docker/Dockerfile.python .
 
           # Build Frontend
           docker build -t sentinel-mesh/frontend:test \
