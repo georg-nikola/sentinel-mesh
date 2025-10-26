@@ -20,7 +20,7 @@ test.describe('Dashboard - Basic Functionality', () => {
 
   test('should display Vue.js application container', async ({ page }) => {
     // Verify Vue app mount point exists and is visible
-    const appContainer = page.locator('#app');
+    const appContainer = page.locator('#app').first();
     await expect(appContainer).toBeVisible();
 
     // Check that the app has content
@@ -63,21 +63,21 @@ test.describe('Dashboard - Basic Functionality', () => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.waitForTimeout(500);
 
-    const appDesktop = page.locator('#app');
+    const appDesktop = page.locator('#app').first();
     await expect(appDesktop).toBeVisible();
 
     // Test mobile viewport
     await page.setViewportSize({ width: 375, height: 812 });
     await page.waitForTimeout(500);
 
-    const appMobile = page.locator('#app');
+    const appMobile = page.locator('#app').first();
     await expect(appMobile).toBeVisible();
 
     // Test tablet viewport
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.waitForTimeout(500);
 
-    const appTablet = page.locator('#app');
+    const appTablet = page.locator('#app').first();
     await expect(appTablet).toBeVisible();
   });
 });
@@ -109,7 +109,7 @@ test.describe('Dashboard - Metrics and Data', () => {
 
     // If no metrics UI found yet, that's okay for initial setup
     // Just verify the page structure is present
-    const appContainer = page.locator('#app');
+    const appContainer = page.locator('#app').first();
     await expect(appContainer).toBeVisible();
   });
 
@@ -129,7 +129,7 @@ test.describe('Dashboard - Metrics and Data', () => {
 
     // The dashboard might make API calls to backend services
     // This test just verifies the page handles API state gracefully
-    const appContainer = page.locator('#app');
+    const appContainer = page.locator('#app').first();
     await expect(appContainer).toBeVisible();
   });
 });
@@ -152,18 +152,18 @@ test.describe('Dashboard - User Interactions', () => {
 
   test('should maintain state during interactions', async ({ page }) => {
     // Get initial page content
-    const initialContent = await page.locator('#app').textContent();
+    const initialContent = await page.locator('#app').first().textContent();
 
     // Scroll the page
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page.waitForTimeout(500);
 
     // Verify content is still present
-    const appContainer = page.locator('#app');
+    const appContainer = page.locator('#app').first();
     await expect(appContainer).toBeVisible();
 
     // Verify the app didn't crash or reload unexpectedly
-    const currentContent = await page.locator('#app').textContent();
+    const currentContent = await page.locator('#app').first().textContent();
     expect(currentContent).toBeTruthy();
   });
 });
