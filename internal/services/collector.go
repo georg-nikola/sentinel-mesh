@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -343,32 +344,57 @@ func (c *Collector) sendEventToKafka(ctx context.Context, event *models.Event) e
 func initKubernetesClients(cfg config.KubernetesConfig) (kubernetes.Interface, versioned.Interface, error) {
 	var config *rest.Config
 	var err error
-	
+
+	// Try in-cluster config first if requested
 	if cfg.InCluster {
 		config, err = rest.InClusterConfig()
-	} else {
+		if err != nil {
+			// Log the in-cluster config error but don't fail yet
+			logrus.WithError(err).Warn("Failed to load in-cluster config, will try file-based config")
+		}
+	}
+
+	// If in-cluster config failed or wasn't requested, try file-based config
+	if config == nil {
 		configPath := cfg.ConfigPath
 		if configPath == "" {
-			configPath = clientcmd.RecommendedHomeFile
+			// Expand HOME environment variable properly
+			homeDir := os.Getenv("HOME")
+			if homeDir == "" {
+				homeDir = "/root"
+			}
+			configPath = homeDir + "/.kube/config"
 		}
-		config, err = clientcmd.BuildConfigFromFlags("", configPath)
+
+		// Check if the config file exists before trying to use it
+		if _, statErr := os.Stat(configPath); statErr == nil {
+			config, err = clientcmd.BuildConfigFromFlags("", configPath)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to build config from file %s: %w", configPath, err)
+			}
+		} else if cfg.InCluster {
+			// If we're supposed to be in-cluster and file doesn't exist, return the original error
+			return nil, nil, fmt.Errorf("in-cluster config failed and no kubeconfig file found: %w", err)
+		} else {
+			return nil, nil, fmt.Errorf("kubeconfig file not found at %s: %w", configPath, statErr)
+		}
 	}
-	
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create Kubernetes config: %w", err)
+
+	if config == nil {
+		return nil, nil, fmt.Errorf("failed to create Kubernetes config: no valid configuration found")
 	}
-	
+
 	// Create standard Kubernetes client
 	kubeClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
-	
+
 	// Create metrics client
 	metricsClient, err := versioned.NewForConfig(config)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create metrics client: %w", err)
 	}
-	
+
 	return kubeClient, metricsClient, nil
 }
