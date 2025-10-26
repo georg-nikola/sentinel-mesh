@@ -1,0 +1,83 @@
+{
+  "dashboard": {
+    "title": "Sentinel Mesh Overview",
+    "tags": ["kubernetes", "sentinel-mesh"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Health (Up/Down)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up",
+            "legendFormat": "{{job}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"]
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"options": {"0": {"text": "Down", "color": "red"}}, "type": "value"},
+              {"options": {"1": {"text": "Up", "color": "green"}}, "type": "value"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Prometheus Scrape Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "scrape_duration_seconds",
+            "legendFormat": "{{job}} - {{instance}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "HTTP Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(promhttp_metric_handler_requests_total[5m])",
+            "legendFormat": "{{code}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Go Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "go_memstats_alloc_bytes / 1024 / 1024",
+            "legendFormat": "{{job}} MB",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "yaxes": [
+          {"format": "decmbytes", "label": "Memory (MB)"}
+        ]
+      }
+    ],
+    "schemaVersion": 36,
+    "version": 0,
+    "refresh": "5s"
+  },
+  "overwrite": true
+}

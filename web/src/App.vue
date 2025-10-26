@@ -1,14 +1,14 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-50">
+  <div id="app" class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm border-b border-gray-200">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
             <!-- Logo -->
             <div class="flex-shrink-0 flex items-center">
-              <h1 class="text-xl font-bold text-gray-900">
-                <span class="text-blue-600">Sentinel</span> Mesh
+              <h1 class="text-xl font-bold text-gray-900 dark:text-white">
+                <span class="text-blue-600 dark:text-blue-400">Sentinel</span> Mesh
               </h1>
             </div>
 
@@ -21,8 +21,8 @@
                 class="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2"
                 :class="
                   $route.path === item.href
-                    ? 'border-blue-500 text-gray-900'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    ? 'border-blue-500 text-gray-900 dark:text-white'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300'
                 "
               >
                 <component :is="item.icon" class="w-4 h-4 mr-2" />
@@ -33,21 +33,31 @@
 
           <!-- Right side -->
           <div class="flex items-center space-x-4">
-            <!-- Connection Status -->
-            <div class="flex items-center space-x-2">
+            <!-- Connection Status - hidden on small screens -->
+            <div class="hidden sm:flex items-center space-x-2">
               <div
                 class="w-2 h-2 rounded-full"
                 :class="connectionStatus === 'connected' ? 'bg-green-400' : 'bg-red-400'"
               ></div>
-              <span class="text-sm text-gray-500">
+              <span class="text-sm text-gray-500 dark:text-gray-400">
                 {{ connectionStatus === 'connected' ? 'Connected' : 'Disconnected' }}
               </span>
             </div>
 
+            <!-- Theme Toggle -->
+            <button
+              @click="toggleTheme"
+              class="p-2 text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200"
+              title="Toggle theme"
+            >
+              <SunIcon v-if="theme === 'dark'" class="w-5 h-5" />
+              <MoonIcon v-else class="w-5 h-5" />
+            </button>
+
             <!-- Notifications -->
             <button
               @click="showNotifications = !showNotifications"
-              class="relative p-2 text-gray-400 hover:text-gray-500"
+              class="relative p-2 text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200"
             >
               <BellIcon class="w-5 h-5" />
               <span
@@ -104,10 +114,10 @@
       class="fixed inset-0 z-50 overflow-hidden"
       @click="showNotifications = false"
     >
-      <div class="absolute inset-0 bg-black bg-opacity-25"></div>
-      <div class="absolute right-0 top-16 w-96 bg-white shadow-lg rounded-lg m-4">
+      <div class="absolute inset-0 bg-black bg-opacity-25 dark:bg-opacity-50"></div>
+      <div class="absolute right-0 top-16 w-96 bg-white dark:bg-gray-800 shadow-lg rounded-lg m-4">
         <div class="p-4">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Notifications</h3>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Notifications</h3>
           <div class="space-y-2">
             <div
               v-for="notification in notifications"
@@ -117,13 +127,13 @@
             >
               <div class="flex justify-between items-start">
                 <div>
-                  <p class="text-sm font-medium">{{ notification.title }}</p>
-                  <p class="text-sm text-gray-600">{{ notification.message }}</p>
-                  <p class="text-xs text-gray-400 mt-1">{{ formatTime(notification.timestamp) }}</p>
+                  <p class="text-sm font-medium dark:text-white">{{ notification.title }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">{{ notification.message }}</p>
+                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ formatTime(notification.timestamp) }}</p>
                 </div>
                 <button
                   @click.stop="dismissNotification(notification.id)"
-                  class="text-gray-400 hover:text-gray-600"
+                  class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <XMarkIcon class="w-4 h-4" />
                 </button>
@@ -150,22 +160,26 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { 
-  BellIcon, 
+import {
+  BellIcon,
   XMarkIcon,
   HomeIcon,
   ChartBarIcon,
   CpuChipIcon,
   ShieldCheckIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  MoonIcon,
+  SunIcon
 } from '@heroicons/vue/24/outline'
 import { useWebSocketStore } from '@/stores/websocket'
 import { useNotificationStore } from '@/stores/notifications'
+import { useTheme } from '@/composables/useTheme'
 import { formatDistanceToNow } from 'date-fns'
 
-// Stores
+// Stores & Composables
 const websocketStore = useWebSocketStore()
 const notificationStore = useNotificationStore()
+const { theme, toggleTheme, initTheme } = useTheme()
 
 // Router
 const router = useRouter()
@@ -197,10 +211,10 @@ const formatTime = (timestamp: Date) => {
 
 const getNotificationClass = (severity: string) => {
   const classes = {
-    info: 'border-blue-200 bg-blue-50',
-    warning: 'border-yellow-200 bg-yellow-50',
-    error: 'border-red-200 bg-red-50',
-    critical: 'border-red-300 bg-red-100',
+    info: 'border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30',
+    warning: 'border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/30',
+    error: 'border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/30',
+    critical: 'border-red-300 dark:border-red-600 bg-red-100 dark:bg-red-900/40',
   }
   return classes[severity as keyof typeof classes] || classes.info
 }
@@ -211,15 +225,12 @@ const dismissNotification = (id: string) => {
 
 // Lifecycle
 onMounted(() => {
+  // Initialize theme
+  initTheme()
+
   // Initialize WebSocket connection
   websocketStore.connect()
-  
-  // Load initial data
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-  }, 1000)
-  
+
   // Close dropdowns when clicking outside
   document.addEventListener('click', (event) => {
     const target = event.target as HTMLElement

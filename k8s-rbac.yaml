@@ -1,0 +1,57 @@
+---
+# Service Account for Collector
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: collector
+  namespace: sentinel-mesh
+---
+# ClusterRole for reading cluster resources
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sentinel-mesh-collector
+rules:
+- apiGroups: [""]
+  resources:
+    - nodes
+    - nodes/stats
+    - nodes/metrics
+    - pods
+    - pods/log
+    - services
+    - endpoints
+    - events
+    - namespaces
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources:
+    - deployments
+    - replicasets
+    - statefulsets
+    - daemonsets
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources:
+    - jobs
+    - cronjobs
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metrics.k8s.io"]
+  resources:
+    - nodes
+    - pods
+  verbs: ["get", "list"]
+---
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sentinel-mesh-collector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sentinel-mesh-collector
+subjects:
+- kind: ServiceAccount
+  name: collector
+  namespace: sentinel-mesh

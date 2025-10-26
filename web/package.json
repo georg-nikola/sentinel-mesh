@@ -2,6 +2,7 @@
   "name": "sentinel-mesh-dashboard",
   "version": "1.0.0",
   "description": "Sentinel Mesh Monitoring Dashboard - Real-time Kubernetes monitoring with AI-powered insights",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "vite",
