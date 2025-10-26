@@ -28,12 +28,9 @@ echo ""
 
 # Test anomaly detection endpoint
 echo "Anomaly Detection Endpoint (/api/v1/anomalies):"
-ANOMALIES_RESPONSE=$(kubectl exec -n $NAMESPACE $ML_POD -- wget -q -O- --timeout=5 http://localhost:8000/api/v1/anomalies 2>/dev/null || echo "FAILED")
+ANOMALIES_RESPONSE=$(kubectl exec -n $NAMESPACE $ML_POD -- python3 -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/api/v1/anomalies').read().decode())" 2>&1)
 
-if [[ "$ANOMALIES_RESPONSE" == "FAILED" ]]; then
-    echo -e "  ${RED}✗${NC} Failed to connect"
-    ((FAILED++))
-elif echo "$ANOMALIES_RESPONSE" | grep -q "anomalies"; then
+if echo "$ANOMALIES_RESPONSE" | grep -q "anomalies"; then
     echo -e "  ${GREEN}✓${NC} Returns anomalies data"
 
     # Check for anomaly structure
@@ -55,19 +52,16 @@ elif echo "$ANOMALIES_RESPONSE" | grep -q "anomalies"; then
     ANOMALY_COUNT=$(echo "$ANOMALIES_RESPONSE" | grep -o "type" | wc -l | tr -d ' ')
     echo "  Found $ANOMALY_COUNT anomalies"
 else
-    echo -e "  ${RED}✗${NC} Invalid response format"
+    echo -e "  ${RED}✗${NC} Failed to connect or invalid response"
     ((FAILED++))
 fi
 echo ""
 
 # Test predictions endpoint
 echo "Predictions Endpoint (/api/v1/predictions):"
-PREDICTIONS_RESPONSE=$(kubectl exec -n $NAMESPACE $ML_POD -- wget -q -O- --timeout=5 http://localhost:8000/api/v1/predictions 2>/dev/null || echo "FAILED")
+PREDICTIONS_RESPONSE=$(kubectl exec -n $NAMESPACE $ML_POD -- python3 -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/api/v1/predictions').read().decode())" 2>&1)
 
-if [[ "$PREDICTIONS_RESPONSE" == "FAILED" ]]; then
-    echo -e "  ${RED}✗${NC} Failed to connect"
-    ((FAILED++))
-elif echo "$PREDICTIONS_RESPONSE" | grep -q "predictions"; then
+if echo "$PREDICTIONS_RESPONSE" | grep -q "predictions"; then
     echo -e "  ${GREEN}✓${NC} Returns predictions data"
 
     # Check for prediction fields
@@ -92,22 +86,19 @@ elif echo "$PREDICTIONS_RESPONSE" | grep -q "predictions"; then
         ((FAILED++))
     fi
 else
-    echo -e "  ${RED}✗${NC} Invalid response format"
+    echo -e "  ${RED}✗${NC} Failed to connect or invalid response"
     ((FAILED++))
 fi
 echo ""
 
 # Test health endpoint
 echo "Health Endpoint:"
-HEALTH_RESPONSE=$(kubectl exec -n $NAMESPACE $ML_POD -- wget -q -O- --timeout=5 http://localhost:8000/health 2>/dev/null || echo "FAILED")
+HEALTH_RESPONSE=$(kubectl exec -n $NAMESPACE $ML_POD -- python3 -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/health').read().decode())" 2>&1)
 
-if [[ "$HEALTH_RESPONSE" == "FAILED" ]]; then
-    echo -e "  ${RED}✗${NC} Failed to connect"
-    ((FAILED++))
-elif echo "$HEALTH_RESPONSE" | grep -q "healthy"; then
+if echo "$HEALTH_RESPONSE" | grep -q "healthy"; then
     echo -e "  ${GREEN}✓${NC} ML service is healthy"
 else
-    echo -e "  ${RED}✗${NC} Health check failed"
+    echo -e "  ${RED}✗${NC} Health check failed or invalid response"
     ((FAILED++))
 fi
 echo ""
