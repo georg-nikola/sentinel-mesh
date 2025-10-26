@@ -11,8 +11,8 @@ permissions:
 jobs:
   auto-approve:
     runs-on: ubuntu-latest
-    # Only run on Dependabot PRs
-    if: github.actor == 'dependabot[bot]'
+    # Only run on Dependabot PRs (check PR author, not push actor)
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
 
     steps:
       - name: Fetch Dependabot metadata
