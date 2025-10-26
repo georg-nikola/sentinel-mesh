@@ -1,0 +1,29 @@
+{
+  "name": "sentinel-mesh-e2e-ui",
+  "version": "1.0.0",
+  "description": "Playwright-based UI end-to-end tests for Sentinel Mesh dashboard",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:chromium": "playwright test --project=chromium",
+    "test:report": "playwright show-report",
+    "test:codegen": "playwright codegen http://localhost:30000"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "ui-testing",
+    "sentinel-mesh"
+  ],
+  "author": "Georg Nikola",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.9.1",
+    "typescript": "^5.9.3"
+  }
+}
