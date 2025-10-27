@@ -98,3 +98,5 @@ See: https://docs.github.com/en/apps/creating-github-apps
 - [GitHub security design for GITHUB_TOKEN](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow)
 - [Creating fine-grained PATs](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
 - [Encrypted secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
+
+<!-- AUTO_REBASE_PAT configured successfully on 2025-10-27 12:45:56 UTC -->
