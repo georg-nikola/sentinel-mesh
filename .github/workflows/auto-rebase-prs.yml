@@ -1,0 +1,140 @@
+name: Auto-Rebase Open PRs
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  rebase-prs:
+    name: Rebase Open Pull Requests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Fetch all branches
+        run: |
+          git fetch --all
+          git pull origin main
+
+      - name: Get open PRs
+        id: prs
+        run: |
+          # Get all open PRs targeting main branch
+          PRS=$(gh pr list --state open --base main --json number,headRefName,isCrossRepository --limit 100)
+          echo "prs=$PRS" >> $GITHUB_OUTPUT
+          echo "Found $(echo "$PRS" | jq '. | length') open PRs"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rebase PRs
+        run: |
+          PRS='${{ steps.prs.outputs.prs }}'
+
+          if [ "$(echo "$PRS" | jq '. | length')" -eq 0 ]; then
+            echo "No open PRs to rebase"
+            exit 0
+          fi
+
+          echo "$PRS" | jq -r '.[] | @json' | while IFS= read -r pr; do
+            PR_NUMBER=$(echo "$pr" | jq -r '.number')
+            BRANCH=$(echo "$pr" | jq -r '.headRefName')
+            IS_FORK=$(echo "$pr" | jq -r '.isCrossRepository')
+
+            # Skip PRs from forks (can't force push to fork branches)
+            if [ "$IS_FORK" = "true" ]; then
+              echo "⊘ PR #$PR_NUMBER: Skipping (from fork)"
+              continue
+            fi
+
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Rebasing PR #$PR_NUMBER (branch: $BRANCH)"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+            # Fetch the PR branch
+            git fetch origin "$BRANCH:$BRANCH" || {
+              echo "✗ Failed to fetch branch $BRANCH"
+              continue
+            }
+
+            # Checkout the PR branch
+            git checkout "$BRANCH" || {
+              echo "✗ Failed to checkout branch $BRANCH"
+              continue
+            }
+
+            # Attempt rebase
+            if git rebase origin/main; then
+              echo "✓ Rebase successful"
+
+              # Force push the rebased branch
+              if git push --force-with-lease origin "$BRANCH"; then
+                echo "✓ Force pushed rebased branch"
+
+                # Comment on PR
+                gh pr comment "$PR_NUMBER" --body "🔄 **Auto-rebase**: This PR has been automatically rebased on the latest \`main\` branch." || echo "⚠ Failed to comment on PR"
+
+                echo "✅ PR #$PR_NUMBER rebased successfully"
+              else
+                echo "✗ Failed to force push branch $BRANCH"
+                git rebase --abort || true
+              fi
+            else
+              echo "✗ Rebase failed (conflicts)"
+              git rebase --abort || true
+
+              # Comment on PR about conflicts
+              gh pr comment "$PR_NUMBER" --body "⚠️ **Auto-rebase failed**: This PR has conflicts with the latest \`main\` branch and needs manual resolution." || echo "⚠ Failed to comment on PR"
+
+              echo "❌ PR #$PR_NUMBER has conflicts - manual intervention required"
+            fi
+
+            # Return to main branch
+            git checkout main || true
+          done
+
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Auto-rebase completed"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create summary
+        if: always()
+        run: |
+          PRS='${{ steps.prs.outputs.prs }}'
+          TOTAL=$(echo "$PRS" | jq '. | length')
+          FORKS=$(echo "$PRS" | jq '[.[] | select(.isCrossRepository == true)] | length')
+          REBASEABLE=$((TOTAL - FORKS))
+
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          # 🔄 Auto-Rebase Summary
+
+          - **Total Open PRs**: $TOTAL
+          - **PRs from Forks** (skipped): $FORKS
+          - **PRs Attempted**: $REBASEABLE
+
+          ## Notes
+
+          - ✅ PRs without conflicts were rebased and force-pushed
+          - ⚠️ PRs with conflicts were left unchanged (comments added)
+          - ⊘ PRs from forks were skipped (can't force-push to fork branches)
+
+          Check individual PR comments for detailed status.
+          EOF
