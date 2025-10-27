@@ -62,14 +62,17 @@ jobs:
         id: dockerfile
         run: |
           if [ "${{ matrix.service }}" = "ml-service" ]; then
-            echo "path=ml/Dockerfile" >> $GITHUB_OUTPUT
-            echo "context=ml" >> $GITHUB_OUTPUT
+            echo "path=deployments/docker/Dockerfile.python" >> $GITHUB_OUTPUT
+            echo "context=." >> $GITHUB_OUTPUT
+            echo "build_arg=" >> $GITHUB_OUTPUT
           elif [ "${{ matrix.service }}" = "frontend" ]; then
             echo "path=web/Dockerfile" >> $GITHUB_OUTPUT
             echo "context=web" >> $GITHUB_OUTPUT
+            echo "build_arg=" >> $GITHUB_OUTPUT
           else
-            echo "path=Dockerfile" >> $GITHUB_OUTPUT
+            echo "path=deployments/docker/Dockerfile.golang" >> $GITHUB_OUTPUT
             echo "context=." >> $GITHUB_OUTPUT
+            echo "build_arg=SERVICE=${{ matrix.service }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Extract metadata for Docker
@@ -85,17 +88,17 @@ jobs:
             type=sha,prefix={{branch}}-
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ${{ steps.dockerfile.outputs.context }}
           file: ${{ steps.dockerfile.outputs.path }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          target: ${{ matrix.service != 'ml-service' && matrix.service != 'frontend' && matrix.service || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
+            ${{ steps.dockerfile.outputs.build_arg }}
             VERSION=${{ steps.version.outputs.version }}
             BUILD_TIME=${{ github.event.repository.updated_at }}
             GIT_COMMIT=${{ github.sha }}
