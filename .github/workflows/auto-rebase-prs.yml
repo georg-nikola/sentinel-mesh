@@ -86,10 +86,14 @@ jobs:
               if git push --force-with-lease origin "$BRANCH"; then
                 echo "✓ Force pushed rebased branch"
 
-                # Comment on PR
-                gh pr comment "$PR_NUMBER" --body "🔄 **Auto-rebase**: This PR has been automatically rebased on the latest \`main\` branch." || echo "⚠ Failed to comment on PR"
+                # Close and reopen PR to trigger CI workflows
+                # Note: Force-pushes with GITHUB_TOKEN don't trigger workflows due to GitHub security
+                echo "🔄 Closing and reopening PR to trigger CI workflows..."
+                gh pr close "$PR_NUMBER" --comment "🔄 **Auto-rebase complete**: Rebased on latest \`main\`. Reopening to trigger CI workflows..." || echo "⚠ Failed to close PR"
+                sleep 2
+                gh pr reopen "$PR_NUMBER" --comment "✅ **CI workflows triggered**: All status checks will run on the rebased commit." || echo "⚠ Failed to reopen PR"
 
-                echo "✅ PR #$PR_NUMBER rebased successfully"
+                echo "✅ PR #$PR_NUMBER rebased successfully and CI triggered"
               else
                 echo "✗ Failed to force push branch $BRANCH"
                 git rebase --abort || true
@@ -133,8 +137,15 @@ jobs:
           ## Notes
 
           - ✅ PRs without conflicts were rebased and force-pushed
+          - 🔄 Successfully rebased PRs are closed/reopened to trigger CI workflows
           - ⚠️ PRs with conflicts were left unchanged (comments added)
           - ⊘ PRs from forks were skipped (can't force-push to fork branches)
+
+          ## Why Close/Reopen?
+
+          Force-pushes with \`GITHUB_TOKEN\` don't trigger other workflows due to GitHub's
+          security design (prevents recursive workflow runs). Closing and reopening the PR
+          ensures all required CI checks run on the rebased commit.
 
           Check individual PR comments for detailed status.
           EOF
