@@ -1,0 +1,418 @@
+name: E2E Infrastructure Tests (kind)
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  KIND_VERSION: 'v0.25.0'
+  KUBECTL_VERSION: 'v1.28.0'
+
+jobs:
+  e2e-infrastructure:
+    name: Infrastructure E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.21'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '18'
+
+      - name: Create kind config
+        run: |
+          cat > /tmp/kind-config.yaml <<EOF
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          nodes:
+          - role: control-plane
+            extraPortMappings:
+            - containerPort: 30000
+              hostPort: 30000
+              protocol: TCP
+            - containerPort: 30090
+              hostPort: 30090
+              protocol: TCP
+          EOF
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: sentinel-mesh-test
+          node_image: kindest/node:v1.28.0
+          wait: 300s
+          config: /tmp/kind-config.yaml
+
+      - name: Verify cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+          kubectl get pods -A
+
+      - name: Build Docker images
+        run: |
+          # Build API service
+          docker build -t sentinel-mesh/api:test \
+            --build-arg SERVICE=api \
+            -f deployments/docker/Dockerfile.golang .
+
+          # Build Collector service
+          docker build -t sentinel-mesh/collector:test \
+            --build-arg SERVICE=collector \
+            -f deployments/docker/Dockerfile.golang .
+
+          # Build ML Service
+          docker build -t sentinel-mesh/ml-service:test \
+            -f deployments/docker/Dockerfile.python .
+
+          # Build Frontend
+          docker build -t sentinel-mesh/frontend:test \
+            -f web/Dockerfile web/
+
+      - name: Load images into kind
+        run: |
+          kind load docker-image sentinel-mesh/api:test --name sentinel-mesh-test
+          kind load docker-image sentinel-mesh/collector:test --name sentinel-mesh-test
+          kind load docker-image sentinel-mesh/ml-service:test --name sentinel-mesh-test
+          kind load docker-image sentinel-mesh/frontend:test --name sentinel-mesh-test
+
+      - name: Deploy infrastructure services
+        run: |
+          # Create namespace
+          kubectl create namespace sentinel-mesh
+
+          # Deploy Redis
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: redis
+            namespace: sentinel-mesh
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: redis
+            template:
+              metadata:
+                labels:
+                  app: redis
+              spec:
+                containers:
+                - name: redis
+                  image: redis:7-alpine
+                  ports:
+                  - containerPort: 6379
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: redis
+            namespace: sentinel-mesh
+          spec:
+            selector:
+              app: redis
+            ports:
+            - port: 6379
+              targetPort: 6379
+          EOF
+
+          # Deploy Prometheus
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: prometheus
+            namespace: sentinel-mesh
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: prometheus
+            template:
+              metadata:
+                labels:
+                  app: prometheus
+              spec:
+                containers:
+                - name: prometheus
+                  image: prom/prometheus:latest
+                  ports:
+                  - containerPort: 9090
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: prometheus
+            namespace: sentinel-mesh
+          spec:
+            selector:
+              app: prometheus
+            ports:
+            - port: 9090
+              targetPort: 9090
+              nodePort: 30090
+            type: NodePort
+          EOF
+
+          # Deploy InfluxDB
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: influxdb
+            namespace: sentinel-mesh
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: influxdb
+            template:
+              metadata:
+                labels:
+                  app: influxdb
+              spec:
+                containers:
+                - name: influxdb
+                  image: influxdb:2.7
+                  ports:
+                  - containerPort: 8086
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: influxdb
+            namespace: sentinel-mesh
+          spec:
+            selector:
+              app: influxdb
+            ports:
+            - port: 8086
+              targetPort: 8086
+          EOF
+
+          # Wait for infrastructure services
+          kubectl wait --for=condition=ready pod -l app=redis -n sentinel-mesh --timeout=120s
+          kubectl wait --for=condition=ready pod -l app=prometheus -n sentinel-mesh --timeout=120s
+          kubectl wait --for=condition=ready pod -l app=influxdb -n sentinel-mesh --timeout=120s
+
+      - name: Deploy application services
+        run: |
+          # Deploy API service
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: api
+            namespace: sentinel-mesh
+          spec:
+            replicas: 2
+            selector:
+              matchLabels:
+                app: api
+            template:
+              metadata:
+                labels:
+                  app: api
+              spec:
+                containers:
+                - name: api
+                  image: sentinel-mesh/api:test
+                  imagePullPolicy: Never
+                  ports:
+                  - containerPort: 8080
+                  env:
+                  - name: REDIS_URL
+                    value: "redis://redis:6379"
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: api
+            namespace: sentinel-mesh
+          spec:
+            selector:
+              app: api
+            ports:
+            - port: 8080
+              targetPort: 8080
+            type: ClusterIP
+          EOF
+
+          # Deploy Collector service
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: collector
+            namespace: sentinel-mesh
+          spec:
+            replicas: 2
+            selector:
+              matchLabels:
+                app: collector
+            template:
+              metadata:
+                labels:
+                  app: collector
+              spec:
+                containers:
+                - name: collector
+                  image: sentinel-mesh/collector:test
+                  imagePullPolicy: Never
+                  ports:
+                  - containerPort: 8080
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: collector
+            namespace: sentinel-mesh
+          spec:
+            selector:
+              app: collector
+            ports:
+            - port: 8080
+              targetPort: 8080
+          EOF
+
+          # Deploy ML Service
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: ml-service
+            namespace: sentinel-mesh
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: ml-service
+            template:
+              metadata:
+                labels:
+                  app: ml-service
+              spec:
+                containers:
+                - name: ml-service
+                  image: sentinel-mesh/ml-service:test
+                  imagePullPolicy: Never
+                  ports:
+                  - containerPort: 8000
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: ml-service
+            namespace: sentinel-mesh
+          spec:
+            selector:
+              app: ml-service
+            ports:
+            - port: 8000
+              targetPort: 8000
+          EOF
+
+          # Deploy Frontend
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: web-dashboard
+            namespace: sentinel-mesh
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: web-dashboard
+            template:
+              metadata:
+                labels:
+                  app: web-dashboard
+              spec:
+                containers:
+                - name: web-dashboard
+                  image: sentinel-mesh/frontend:test
+                  imagePullPolicy: Never
+                  ports:
+                  - containerPort: 8080
+                  resources:
+                    limits:
+                      cpu: 200m
+                      memory: 128Mi
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: web-dashboard
+            namespace: sentinel-mesh
+          spec:
+            selector:
+              app: web-dashboard
+            ports:
+            - port: 8080
+              targetPort: 8080
+              nodePort: 30000
+            type: NodePort
+          EOF
+
+      - name: Wait for all pods to be ready
+        run: |
+          echo "Waiting for all pods to be ready..."
+          kubectl wait --for=condition=ready pod --all -n sentinel-mesh --timeout=300s
+
+          echo "Pod status:"
+          kubectl get pods -n sentinel-mesh
+
+      - name: Run E2E tests
+        run: |
+          echo "Running E2E test suite..."
+          ./tests/e2e/run-all.sh || true
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods -n sentinel-mesh
+
+          echo "=== API Logs ==="
+          kubectl logs -n sentinel-mesh -l app=api --tail=100 || true
+
+          echo "=== Collector Logs ==="
+          kubectl logs -n sentinel-mesh -l app=collector --tail=100 || true
+
+          echo "=== ML Service Logs ==="
+          kubectl logs -n sentinel-mesh -l app=ml-service --tail=100 || true
+
+          echo "=== Frontend Logs ==="
+          kubectl logs -n sentinel-mesh -l app=web-dashboard --tail=100 || true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-infrastructure-test-results
+          path: /tmp/e2e-test-results.txt
+          retention-days: 30
+
+      - name: Cleanup
+        if: always()
+        run: |
+          kind delete cluster --name sentinel-mesh-test || true

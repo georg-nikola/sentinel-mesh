@@ -1,0 +1,342 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v0.1.0)'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/sentinel-mesh
+
+jobs:
+  build-and-push-images:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service:
+          - api
+          - collector
+          - processor
+          - analyzer
+          - alerting
+          - ml-service
+          - frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.tag }}"
+          else
+            VERSION="${{ github.event.release.tag_name }}"
+          fi
+          # Remove 'v' prefix if present
+          VERSION=${VERSION#v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Determine Dockerfile path
+        id: dockerfile
+        run: |
+          if [ "${{ matrix.service }}" = "ml-service" ]; then
+            echo "path=ml/Dockerfile" >> $GITHUB_OUTPUT
+            echo "context=ml" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.service }}" = "frontend" ]; then
+            echo "path=web/Dockerfile" >> $GITHUB_OUTPUT
+            echo "context=web" >> $GITHUB_OUTPUT
+          else
+            echo "path=Dockerfile" >> $GITHUB_OUTPUT
+            echo "context=." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.tag }}
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.tag }}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ steps.dockerfile.outputs.context }}
+          file: ${{ steps.dockerfile.outputs.path }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          target: ${{ matrix.service != 'ml-service' && matrix.service != 'frontend' && matrix.service || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            BUILD_TIME=${{ github.event.repository.updated_at }}
+            GIT_COMMIT=${{ github.sha }}
+
+  create-release-summary:
+    name: Create Release Summary
+    runs-on: ubuntu-latest
+    needs: build-and-push-images
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.tag }}"
+          else
+            VERSION="${{ github.event.release.tag_name }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Generate image list
+        id: images
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION_NO_V=${VERSION#v}
+
+          cat > images.txt <<EOF
+          ## Published Docker Images
+
+          All images are available at GitHub Container Registry (GHCR):
+
+          \`\`\`bash
+          # API Service
+          docker pull ghcr.io/${{ github.repository_owner }}/sentinel-mesh/api:${VERSION_NO_V}
+
+          # Collector Service
+          docker pull ghcr.io/${{ github.repository_owner }}/sentinel-mesh/collector:${VERSION_NO_V}
+
+          # Processor Service
+          docker pull ghcr.io/${{ github.repository_owner }}/sentinel-mesh/processor:${VERSION_NO_V}
+
+          # Analyzer Service
+          docker pull ghcr.io/${{ github.repository_owner }}/sentinel-mesh/analyzer:${VERSION_NO_V}
+
+          # Alerting Service
+          docker pull ghcr.io/${{ github.repository_owner }}/sentinel-mesh/alerting:${VERSION_NO_V}
+
+          # ML Service
+          docker pull ghcr.io/${{ github.repository_owner }}/sentinel-mesh/ml-service:${VERSION_NO_V}
+
+          # Frontend
+          docker pull ghcr.io/${{ github.repository_owner }}/sentinel-mesh/frontend:${VERSION_NO_V}
+          \`\`\`
+
+          ### Using with Helm
+
+          \`\`\`bash
+          helm install sentinel-mesh ./deployments/helm/sentinel-mesh \\
+            --set image.registry=ghcr.io \\
+            --set image.repository=${{ github.repository_owner }}/sentinel-mesh \\
+            --set image.tag=${VERSION_NO_V}
+          \`\`\`
+
+          ### Image Tags Available
+
+          - \`${VERSION_NO_V}\` - Specific version
+          - \`latest\` - Latest stable release
+          - \`main-<sha>\` - Development builds from main branch
+
+          ### Image Sizes
+
+          All images use multi-stage builds for minimal size:
+          - Go services: ~20-30 MB (Alpine-based)
+          - Python ML service: ~200-300 MB
+          - Frontend: ~50-100 MB (nginx-based)
+          EOF
+
+          cat images.txt
+
+      - name: Comment on release (if release event)
+        if: github.event_name == 'release'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const images = fs.readFileSync('images.txt', 'utf8');
+
+            github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id,
+              body: context.payload.release.body + '\n\n' + images
+            });
+
+  update-helm-chart:
+    name: Update Helm Chart Version
+    runs-on: ubuntu-latest
+    needs: build-and-push-images
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.tag }}"
+          else
+            VERSION="${{ github.event.release.tag_name }}"
+          fi
+          VERSION_NO_V=${VERSION#v}
+          echo "version=${VERSION_NO_V}" >> $GITHUB_OUTPUT
+
+      - name: Update Helm Chart appVersion
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Update Chart.yaml if it exists
+          if [ -f "deployments/helm/sentinel-mesh/Chart.yaml" ]; then
+            sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" deployments/helm/sentinel-mesh/Chart.yaml
+            echo "Updated Chart.yaml appVersion to ${VERSION}"
+          fi
+
+      - name: Update values.yaml image tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Update values.yaml if it exists
+          if [ -f "deployments/helm/sentinel-mesh/values.yaml" ]; then
+            sed -i "s/tag:.*/tag: \"${VERSION}\"/" deployments/helm/sentinel-mesh/values.yaml
+            echo "Updated values.yaml image tag to ${VERSION}"
+          fi
+
+      - name: Commit and push Helm chart updates
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git add deployments/helm/sentinel-mesh/Chart.yaml deployments/helm/sentinel-mesh/values.yaml
+            git commit -m "chore: update Helm chart to version ${{ steps.version.outputs.version }}"
+            git push
+          else
+            echo "No changes to commit"
+          fi
+
+  test-images:
+    name: Test Published Images
+    runs-on: ubuntu-latest
+    needs: build-and-push-images
+    strategy:
+      matrix:
+        service: [api, collector, processor, analyzer, alerting, ml-service]
+    steps:
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.tag }}"
+          else
+            VERSION="${{ github.event.release.tag_name }}"
+          fi
+          VERSION_NO_V=${VERSION#v}
+          echo "version=${VERSION_NO_V}" >> $GITHUB_OUTPUT
+
+      - name: Pull and test image
+        run: |
+          IMAGE="ghcr.io/${{ github.repository_owner }}/sentinel-mesh/${{ matrix.service }}:${{ steps.version.outputs.version }}"
+
+          echo "Pulling image: ${IMAGE}"
+          docker pull ${IMAGE}
+
+          echo "Starting container..."
+          CONTAINER_ID=$(docker run -d -p 8080:8080 ${IMAGE})
+
+          echo "Waiting for service to start..."
+          sleep 10
+
+          echo "Testing health endpoint..."
+          curl -f http://localhost:8080/health || exit 1
+
+          echo "Testing metrics endpoint..."
+          curl -f http://localhost:8080/metrics || exit 1
+
+          echo "Stopping container..."
+          docker stop ${CONTAINER_ID}
+
+          echo "✅ Image test passed for ${{ matrix.service }}"
+
+  notify-success:
+    name: Notify Release Success
+    runs-on: ubuntu-latest
+    needs: [build-and-push-images, test-images]
+    if: success()
+    steps:
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.tag }}"
+          else
+            VERSION="${{ github.event.release.tag_name }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Create success summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          # 🎉 Release ${{ steps.version.outputs.version }} Published Successfully!
+
+          ## Images Built and Pushed
+
+          - ✅ API Service
+          - ✅ Collector Service
+          - ✅ Processor Service
+          - ✅ Analyzer Service
+          - ✅ Alerting Service
+          - ✅ ML Service
+          - ✅ Frontend
+
+          ## Registry
+
+          All images available at: \`ghcr.io/${{ github.repository_owner }}/sentinel-mesh/\`
+
+          ## Next Steps
+
+          1. Test the release in staging environment
+          2. Update documentation if needed
+          3. Announce release to users
+          4. Monitor for issues
+
+          ## Quick Install
+
+          \`\`\`bash
+          helm install sentinel-mesh ./deployments/helm/sentinel-mesh \\
+            --set image.tag=${{ steps.version.outputs.version }}
+          \`\`\`
+          EOF
