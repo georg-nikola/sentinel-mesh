@@ -1,0 +1,113 @@
+name: Trigger CI on Main
+
+# This workflow ensures CI runs on main branch even when commits
+# are made via auto-merge (which uses GITHUB_TOKEN and doesn't trigger workflows)
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  ensure-ci-runs:
+    name: Ensure CI Runs on Main
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Wait for CI to start
+        run: |
+          echo "Waiting 10 seconds for CI Pipeline to start..."
+          sleep 10
+
+      - name: Check if CI Pipeline is running
+        id: check_ci
+        run: |
+          # Get the current commit SHA
+          COMMIT_SHA="${{ github.sha }}"
+
+          echo "Checking for CI Pipeline workflow runs on commit $COMMIT_SHA..."
+
+          # Check if CI Pipeline workflow is running or has run
+          RUNS=$(gh run list \
+            --commit "$COMMIT_SHA" \
+            --workflow "CI Pipeline" \
+            --json databaseId,status,conclusion \
+            --limit 5)
+
+          RUN_COUNT=$(echo "$RUNS" | jq '. | length')
+
+          echo "Found $RUN_COUNT CI Pipeline run(s) for this commit"
+
+          if [ "$RUN_COUNT" -eq 0 ]; then
+            echo "ci_running=false" >> $GITHUB_OUTPUT
+            echo "⚠️  No CI Pipeline workflow found for this commit"
+          else
+            echo "ci_running=true" >> $GITHUB_OUTPUT
+            echo "✅ CI Pipeline workflow already running/completed"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger CI if not running
+        if: steps.check_ci.outputs.ci_running == 'false'
+        run: |
+          echo "🔄 CI Pipeline didn't trigger (likely due to auto-merge using GITHUB_TOKEN)"
+          echo "Triggering CI Pipeline manually..."
+
+          # Trigger the CI workflow manually
+          gh workflow run ci.yml \
+            --ref main
+
+          echo "✅ CI Pipeline triggered successfully"
+          echo ""
+          echo "Note: This is a temporary workaround until AUTO_REBASE_PAT is configured."
+          echo "See .github/AUTO_REBASE_SETUP.md for setup instructions."
+        env:
+          # Use PAT if available, fallback to GITHUB_TOKEN
+          # PAT is needed to trigger workflows
+          GITHUB_TOKEN: ${{ secrets.AUTO_REBASE_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Create summary
+        if: always()
+        run: |
+          CI_RUNNING="${{ steps.check_ci.outputs.ci_running }}"
+
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          # 🔄 CI Trigger Check on Main
+
+          **Commit**: \`${{ github.sha }}\`
+          **Branch**: \`main\`
+          **Triggered by**: ${{ github.event.head_commit.committer.name }}
+
+          ## Status
+
+          EOF
+
+          if [ "$CI_RUNNING" = "true" ]; then
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ✅ **CI Pipeline is running** - No action needed
+
+          The CI Pipeline workflow was triggered normally for this commit.
+          EOF
+          else
+            cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ⚠️  **CI Pipeline was not triggered** - Manual trigger initiated
+
+          This typically happens when:
+          - Auto-merge feature merged a PR (uses GITHUB_TOKEN internally)
+          - Another workflow pushed to main (GITHUB_TOKEN doesn't trigger workflows)
+
+          ## Solution
+
+          Configure \`AUTO_REBASE_PAT\` to enable workflows to trigger properly:
+          1. Create a fine-grained PAT with Contents + Pull Requests + Workflows permissions
+          2. Add as repository secret named \`AUTO_REBASE_PAT\`
+          3. See \`.github/AUTO_REBASE_SETUP.md\` for detailed instructions
+
+          Once configured, this workaround won't be necessary.
+          EOF
+          fi
