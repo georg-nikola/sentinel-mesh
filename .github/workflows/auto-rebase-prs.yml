@@ -19,7 +19,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # Use PAT to trigger workflows and preserve approvals
+          # Fallback to GITHUB_TOKEN if PAT not configured
+          token: ${{ secrets.AUTO_REBASE_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Configure git
         run: |
@@ -86,14 +88,10 @@ jobs:
               if git push --force-with-lease origin "$BRANCH"; then
                 echo "✓ Force pushed rebased branch"
 
-                # Close and reopen PR to trigger CI workflows
-                # Note: Force-pushes with GITHUB_TOKEN don't trigger workflows due to GitHub security
-                echo "🔄 Closing and reopening PR to trigger CI workflows..."
-                gh pr close "$PR_NUMBER" --comment "🔄 **Auto-rebase complete**: Rebased on latest \`main\`. Reopening to trigger CI workflows..." || echo "⚠ Failed to close PR"
-                sleep 2
-                gh pr reopen "$PR_NUMBER" --comment "✅ **CI workflows triggered**: All status checks will run on the rebased commit." || echo "⚠ Failed to reopen PR"
+                # Comment on PR
+                gh pr comment "$PR_NUMBER" --body "🔄 **Auto-rebase**: This PR has been automatically rebased on the latest \`main\` branch." || echo "⚠ Failed to comment on PR"
 
-                echo "✅ PR #$PR_NUMBER rebased successfully and CI triggered"
+                echo "✅ PR #$PR_NUMBER rebased successfully"
               else
                 echo "✗ Failed to force push branch $BRANCH"
                 git rebase --abort || true
@@ -137,15 +135,20 @@ jobs:
           ## Notes
 
           - ✅ PRs without conflicts were rebased and force-pushed
-          - 🔄 Successfully rebased PRs are closed/reopened to trigger CI workflows
           - ⚠️ PRs with conflicts were left unchanged (comments added)
           - ⊘ PRs from forks were skipped (can't force-push to fork branches)
 
-          ## Why Close/Reopen?
+          ## Setup Required for Full Automation
 
-          Force-pushes with \`GITHUB_TOKEN\` don't trigger other workflows due to GitHub's
-          security design (prevents recursive workflow runs). Closing and reopening the PR
-          ensures all required CI checks run on the rebased commit.
+          To trigger CI workflows and preserve PR approvals after rebasing, create a Personal
+          Access Token (PAT) and add it as \`AUTO_REBASE_PAT\` repository secret:
+
+          1. Go to: Settings → Developer settings → Personal access tokens → Fine-grained tokens
+          2. Create token with permissions: Contents (Read/Write), Pull Requests (Read/Write)
+          3. Add as repository secret: Settings → Secrets and variables → Actions → New secret
+          4. Name: \`AUTO_REBASE_PAT\`, Value: your token
+
+          Without PAT, \`GITHUB_TOKEN\` is used (workflows won't trigger on rebased commits).
 
           Check individual PR comments for detailed status.
           EOF
