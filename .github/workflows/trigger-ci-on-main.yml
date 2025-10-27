@@ -33,6 +33,7 @@ jobs:
 
           # Check if CI Pipeline workflow is running or has run
           RUNS=$(gh run list \
+            --repo ${{ github.repository }} \
             --commit "$COMMIT_SHA" \
             --workflow "CI Pipeline" \
             --json databaseId,status,conclusion \
@@ -60,6 +61,7 @@ jobs:
 
           # Trigger the CI workflow manually
           gh workflow run ci.yml \
+            --repo ${{ github.repository }} \
             --ref main
 
           echo "✅ CI Pipeline triggered successfully"
