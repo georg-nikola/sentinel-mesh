@@ -526,44 +526,294 @@ export const API_CONFIG = {
 
 ## Deployment
 
-### Local Development (OrbStack)
+Sentinel Mesh uses a two-stage deployment process:
+1. **Staging** (OrbStack) - For E2E testing before release
+2. **Production** (Talos cluster) - Production deployment with basic-auth protection
 
+### Staging Deployment (OrbStack)
+
+Staging is used for E2E testing before creating releases. Dashboards are **not** protected with basic-auth in staging.
+
+#### Prerequisites
 ```bash
-# Start OrbStack Kubernetes
+# Ensure OrbStack is running
 orb start
 
-# Deploy services
-kubectl apply -f deployments/kubernetes/
-
-# Access frontend
-kubectl port-forward -n sentinel-mesh svc/frontend 3000:80
-# Open http://localhost:3000
+# Verify kubectl context
+kubectl config current-context  # Should show orbstack
 ```
 
-### Production Deployment
+#### Deploy to Staging
 
-1. **Build and Push Images**:
-   ```bash
-   # Configure registry (DockerHub, GHCR, etc.)
-   docker build -t your-registry/sentinel-mesh-api:v0.1.0 .
-   docker push your-registry/sentinel-mesh-api:v0.1.0
-   ```
+```bash
+# 1. Build Docker images locally
+docker build -t sentinel-mesh/api:staging -f Dockerfile --target api .
+docker build -t sentinel-mesh/collector:staging -f Dockerfile --target collector .
+docker build -t sentinel-mesh/processor:staging -f Dockerfile --target processor .
+docker build -t sentinel-mesh/analyzer:staging -f Dockerfile --target analyzer .
+docker build -t sentinel-mesh/alerting:staging -f Dockerfile --target alerting .
+docker build -t sentinel-mesh/ml-service:staging -f ml/Dockerfile ml/
+docker build -t sentinel-mesh/frontend:staging -f deployments/docker/Dockerfile.web web/
 
-2. **Deploy with Helm**:
-   ```bash
-   helm upgrade --install sentinel-mesh deployments/helm/sentinel-mesh \
-     --namespace sentinel-mesh \
-     --create-namespace \
-     --set image.tag=v0.1.0 \
-     --set ingress.enabled=true \
-     --set ingress.hosts[0].host=sentinel.yourdomain.com
-   ```
+# 2. Deploy with Helm (using local images)
+helm upgrade --install sentinel-mesh deployments/helm/sentinel-mesh \
+  --namespace sentinel-mesh \
+  --create-namespace \
+  --set image.tag=staging \
+  --set image.pullPolicy=Never
 
-3. **Verify Deployment**:
-   ```bash
-   kubectl get pods -n sentinel-mesh
-   kubectl get ingress -n sentinel-mesh
-   ```
+# 3. Port-forward for local access
+kubectl port-forward -n sentinel-mesh svc/frontend 3000:80 &
+kubectl port-forward -n sentinel-mesh svc/api 8080:8080 &
+
+# 4. Access staging
+open http://localhost:3000
+```
+
+#### E2E Testing on Staging
+
+```bash
+# Run E2E tests
+cd web
+npm run test:e2e  # If configured
+
+# Manual testing checklist:
+# - Frontend loads at http://localhost:3000
+# - All 5 views render (Dashboard, Metrics, Security, Nodes, Services)
+# - Charts display and update with data
+# - API health check: curl http://localhost:8080/health
+# - ML service health check: curl http://localhost:8000/health
+# - Security view shows anomalies from ML service
+# - No console errors in browser
+```
+
+#### Cleanup Staging
+
+```bash
+# Remove staging deployment
+helm uninstall sentinel-mesh -n sentinel-mesh
+kubectl delete namespace sentinel-mesh
+```
+
+### Production Deployment (Talos Cluster)
+
+Production deployment uses Traefik IngressRoutes with Cloudflare Tunnel for secure access. All dashboards are protected with basic-auth.
+
+#### Production Architecture
+
+```
+Internet → Cloudflare Edge → Cloudflare Tunnel → Traefik (with basic-auth) → Sentinel Mesh
+```
+
+**Location**: Production cluster configs at `~/repos/talos-configs/local-cluster-config/`
+
+#### Prerequisites
+
+1. Docker images pushed to registry
+2. Access to production Talos cluster
+3. Cloudflare Tunnel configured
+4. `htpasswd` utility installed
+
+#### Production Deployment Steps
+
+**1. Build and Push Images to Registry**
+
+```bash
+# Set version for release
+VERSION=v0.2.0
+
+# Build and tag images
+docker build -t docker.io/yourusername/sentinel-mesh-api:${VERSION} \
+  -f Dockerfile --target api .
+docker build -t docker.io/yourusername/sentinel-mesh-collector:${VERSION} \
+  -f Dockerfile --target collector .
+docker build -t docker.io/yourusername/sentinel-mesh-processor:${VERSION} \
+  -f Dockerfile --target processor .
+docker build -t docker.io/yourusername/sentinel-mesh-analyzer:${VERSION} \
+  -f Dockerfile --target analyzer .
+docker build -t docker.io/yourusername/sentinel-mesh-alerting:${VERSION} \
+  -f Dockerfile --target alerting .
+docker build -t docker.io/yourusername/sentinel-mesh-ml-service:${VERSION} \
+  -f ml/Dockerfile ml/
+docker build -t docker.io/yourusername/sentinel-mesh-frontend:${VERSION} \
+  -f deployments/docker/Dockerfile.web web/
+
+# Push to registry
+docker push docker.io/yourusername/sentinel-mesh-api:${VERSION}
+docker push docker.io/yourusername/sentinel-mesh-collector:${VERSION}
+docker push docker.io/yourusername/sentinel-mesh-processor:${VERSION}
+docker push docker.io/yourusername/sentinel-mesh-analyzer:${VERSION}
+docker push docker.io/yourusername/sentinel-mesh-alerting:${VERSION}
+docker push docker.io/yourusername/sentinel-mesh-ml-service:${VERSION}
+docker push docker.io/yourusername/sentinel-mesh-frontend:${VERSION}
+```
+
+**2. Set up Basic Authentication**
+
+```bash
+# Switch to production cluster context
+kubectl config use-context admin@talos-cluster
+
+# Run auth setup script
+cd deployments/production
+./auth-setup.sh
+# Enter username/password when prompted
+
+# Apply middleware and IngressRoutes
+kubectl apply -f namespace.yaml
+kubectl apply -f middleware.yaml
+kubectl apply -f ingressroutes.yaml
+```
+
+**3. Deploy Sentinel Mesh with Helm**
+
+```bash
+# From repository root
+helm upgrade --install sentinel-mesh deployments/helm/sentinel-mesh \
+  --namespace sentinel-mesh \
+  --create-namespace \
+  --set image.registry=docker.io \
+  --set image.repository=yourusername \
+  --set image.tag=${VERSION} \
+  --set image.pullPolicy=Always \
+  --set ingress.enabled=false  # We use IngressRoutes instead
+```
+
+**4. Configure Cloudflare Tunnel**
+
+Update tunnel configuration:
+```bash
+# Edit tunnel config
+kubectl edit configmap cloudflared-config -n cloudflare-tunnel
+
+# Add these ingress rules:
+# ingress:
+#   - hostname: sentinel-mesh.georg-nikola.com
+#     service: http://traefik.traefik.svc.cluster.local:80
+#   - hostname: sentinel-mesh-api.georg-nikola.com
+#     service: http://traefik.traefik.svc.cluster.local:80
+#   # ... existing services ...
+#   - service: http_status:404
+
+# Or apply from file (recommended)
+cd ~/repos/talos-configs/local-cluster-config/manifests/cloudflare-tunnel
+# Edit config.yaml to add sentinel-mesh entries
+kubectl apply -f config.yaml
+
+# Restart tunnel to pick up changes
+kubectl rollout restart deployment/cloudflared -n cloudflare-tunnel
+```
+
+**5. Add DNS Records via Terraform**
+
+```bash
+cd ~/repos/talos-configs/local-cluster-config/manifests/terraform
+
+# Add to main.tf:
+cat >> main.tf <<EOF
+
+# Sentinel Mesh Frontend
+resource "cloudflare_record" "sentinel_mesh" {
+  zone_id = data.cloudflare_zone.main.id
+  name    = "sentinel-mesh"
+  content = "\${var.cloudflare_tunnel_id}.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+  ttl     = 1
+}
+
+# Sentinel Mesh API
+resource "cloudflare_record" "sentinel_mesh_api" {
+  zone_id = data.cloudflare_zone.main.id
+  name    = "sentinel-mesh-api"
+  content = "\${var.cloudflare_tunnel_id}.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+  ttl     = 1
+}
+EOF
+
+# Apply Terraform
+terraform plan
+terraform apply
+```
+
+**6. Verify Production Deployment**
+
+```bash
+# Check pods
+kubectl get pods -n sentinel-mesh
+
+# Check services
+kubectl get svc -n sentinel-mesh
+
+# Check IngressRoutes
+kubectl get ingressroute -n sentinel-mesh
+
+# Check auth secret
+kubectl get secret sentinel-mesh-auth -n sentinel-mesh
+
+# Wait ~2 minutes for DNS propagation, then access:
+# https://sentinel-mesh.georg-nikola.com (will prompt for basic-auth)
+# https://sentinel-mesh-api.georg-nikola.com
+```
+
+#### Production Verification Checklist
+
+- [ ] All pods running: `kubectl get pods -n sentinel-mesh`
+- [ ] Services responding: `kubectl get svc -n sentinel-mesh`
+- [ ] IngressRoutes created: `kubectl get ingressroute -n sentinel-mesh`
+- [ ] Basic-auth working: Access https://sentinel-mesh.georg-nikola.com (should prompt for credentials)
+- [ ] Frontend loads and displays data
+- [ ] API responds: `curl -u username:password https://sentinel-mesh-api.georg-nikola.com/health`
+- [ ] Cloudflare Tunnel connected: `kubectl logs -n cloudflare-tunnel -l app=cloudflared | grep "Registered tunnel"`
+- [ ] Prometheus metrics exposed on pods (port 9090)
+
+#### Updating Production
+
+```bash
+# Build and push new version
+VERSION=v0.2.1
+# ... build and push steps ...
+
+# Upgrade with Helm
+helm upgrade sentinel-mesh deployments/helm/sentinel-mesh \
+  --namespace sentinel-mesh \
+  --set image.tag=${VERSION} \
+  --reuse-values
+
+# Monitor rollout
+kubectl rollout status deployment/api -n sentinel-mesh
+kubectl rollout status deployment/frontend -n sentinel-mesh
+```
+
+#### Production Rollback
+
+```bash
+# Rollback to previous release
+helm rollback sentinel-mesh -n sentinel-mesh
+
+# Or rollback to specific revision
+helm history sentinel-mesh -n sentinel-mesh
+helm rollback sentinel-mesh <REVISION> -n sentinel-mesh
+```
+
+#### Production Monitoring
+
+Access monitoring dashboards (also protected with basic-auth):
+- **Grafana**: https://grafana.georg-nikola.com
+- **Prometheus**: https://prometheus.georg-nikola.com
+- **Alertmanager**: https://alertmanager.georg-nikola.com
+
+All monitoring UIs use the monitoring-auth secret configured in the production cluster.
+
+### Deployment Troubleshooting
+
+See `deployments/production/README.md` for detailed troubleshooting steps including:
+- 401 Unauthorized errors
+- 404 Not Found errors
+- DNS resolution issues
+- Tunnel routing problems
 
 ## Troubleshooting
 
