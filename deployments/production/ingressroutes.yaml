@@ -1,0 +1,38 @@
+---
+# Sentinel Mesh Frontend IngressRoute (with Basic Auth)
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sentinel-mesh-frontend
+  namespace: sentinel-mesh
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+  - match: Host(`sentinel-mesh.georg-nikola.com`)
+    kind: Rule
+    middlewares:
+    - name: sentinel-mesh-auth
+    services:
+    - name: frontend
+      port: 80
+---
+# Sentinel Mesh API IngressRoute (with Basic Auth)
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sentinel-mesh-api
+  namespace: sentinel-mesh
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+  - match: Host(`sentinel-mesh-api.georg-nikola.com`)
+    kind: Rule
+    middlewares:
+    - name: sentinel-mesh-auth
+    services:
+    - name: api
+      port: 8080

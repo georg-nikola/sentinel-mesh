@@ -1,0 +1,10 @@
+---
+# Basic Auth Middleware for Sentinel Mesh Dashboard
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: sentinel-mesh-auth
+  namespace: sentinel-mesh
+spec:
+  basicAuth:
+    secret: sentinel-mesh-auth
