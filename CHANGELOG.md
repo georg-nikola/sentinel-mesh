@@ -115,6 +115,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ML models are currently mock implementations for testing
 - Advanced security features planned for future releases
 
+## [0.2.0] - 2025-11-01
+
+### Added
+
+#### Production Deployment
+- Production deployment manifests for Talos Kubernetes cluster
+- Traefik IngressRoute configuration for external access
+- Basic authentication middleware for dashboard protection
+- Auth setup script (`auth-setup.sh`) for creating htpasswd credentials
+- Production deployment README with step-by-step instructions
+- Namespace configuration for sentinel-mesh in production
+
+#### Documentation
+- Comprehensive staging deployment guide using OrbStack
+- Production deployment guide with Traefik and Cloudflare Tunnel integration
+- E2E testing workflow for staging environments
+- Production verification checklists
+- Cloudflare Tunnel configuration examples
+- DNS setup with Terraform examples
+- Deployment troubleshooting guide
+- Updated CLAUDE.md with detailed deployment procedures
+
+#### CI/CD Improvements
+- Auto-merge for GitHub Actions dependency updates
+- Dependabot dependency update automation
+
+### Changed
+- Updated CLAUDE.md deployment section with two-stage process (staging → production)
+- Enhanced documentation structure for better deployment workflow visibility
+- Improved production security with basic-auth protection on all dashboards
+
+### Security
+- Basic authentication protection for production dashboards
+- Secure credential management with Kubernetes secrets
+- Integration with existing Cloudflare security features (DDoS, WAF-ready)
+
 ## [Unreleased]
 
 ### Planned Features
@@ -130,4 +166,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.2.0]: https://github.com/georg-nikola/sentinel-mesh/releases/tag/v0.2.0
 [0.1.0]: https://github.com/georg-nikola/sentinel-mesh/releases/tag/v0.1.0
