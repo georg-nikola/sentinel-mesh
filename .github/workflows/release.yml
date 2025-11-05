@@ -85,7 +85,6 @@ jobs:
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.tag }}
             type=semver,pattern={{major}},value=${{ steps.version.outputs.tag }}
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix={{branch}}-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
