@@ -2,6 +2,32 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ IMPORTANT: Public Repository Security
+
+**This is a PUBLIC repository visible to everyone on the internet.**
+
+When making ANY changes to this repository, you MUST ensure:
+
+1. **No Sensitive Information:**
+   - ❌ Do NOT commit actual domain names (use `example.com` placeholders)
+   - ❌ Do NOT commit cluster names (use generic "production cluster" or "Kubernetes cluster")
+   - ❌ Do NOT commit IP addresses, tunnel IDs, or credentials
+   - ❌ Do NOT commit specific infrastructure details (e.g., "Talos", "OrbStack")
+   - ✅ Use generic placeholders: `example.com`, `production cluster`, `local development`
+
+2. **Before Committing:**
+   - Review all changed files for sensitive information
+   - Check commit messages for infrastructure-specific terms
+   - Ensure documentation uses generic examples only
+
+3. **Sanitized Terms:**
+   - Use "Kubernetes cluster" or "production cluster" (not specific distributions)
+   - Use "local development environment" (not specific tools)
+   - Use "example.com" for all domain references
+   - Use generic descriptions for deployment targets
+
+**If you accidentally commit sensitive information, immediately rewrite Git history using `git filter-branch` before anyone clones the repository.**
+
 ## Project Overview
 
 Sentinel Mesh is a cloud-native distributed system monitoring platform built for Kubernetes environments. It combines real-time observability with machine learning-powered security intelligence to provide comprehensive monitoring, anomaly detection, and automated incident response capabilities.
