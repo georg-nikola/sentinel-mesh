@@ -1,0 +1,40 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: sentinel-mesh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api
+        image: sentinel-mesh/api:staging
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: LOG_LEVEL
+          value: "info"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: sentinel-mesh
+spec:
+  selector:
+    app: api
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP

@@ -1,0 +1,68 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: sentinel-mesh
+  labels:
+    app: frontend
+    component: ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+        component: ui
+    spec:
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: frontend
+        image: ghcr.io/georg-nikola/sentinel-mesh/frontend:0.2.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: sentinel-mesh
+  labels:
+    app: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+    name: http
+  type: ClusterIP

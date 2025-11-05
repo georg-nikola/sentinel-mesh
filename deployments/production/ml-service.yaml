@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-service
+  namespace: sentinel-mesh
+  labels:
+    app: ml-service
+    component: analytics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-service
+  template:
+    metadata:
+      labels:
+        app: ml-service
+        component: analytics
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: ml-service
+        image: ghcr.io/georg-nikola/sentinel-mesh/ml-service:0.2.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-service
+  namespace: sentinel-mesh
+  labels:
+    app: ml-service
+spec:
+  selector:
+    app: ml-service
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+  type: ClusterIP
