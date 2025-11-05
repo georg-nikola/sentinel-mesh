@@ -62,11 +62,11 @@ helm upgrade --install sentinel-mesh deployments/helm/sentinel-mesh \
 Update the Cloudflare Tunnel configuration to include Sentinel Mesh:
 
 ```yaml
-# In ~/repos/talos-configs/local-cluster-config/manifests/cloudflare-tunnel/config.yaml
+# In your Cloudflare Tunnel configuration
 ingress:
-  - hostname: sentinel-mesh.georg-nikola.com
+  - hostname: sentinel-mesh.example.com
     service: http://traefik.traefik.svc.cluster.local:80
-  - hostname: sentinel-mesh-api.georg-nikola.com
+  - hostname: sentinel-mesh-api.example.com
     service: http://traefik.traefik.svc.cluster.local:80
   # ... other services ...
   - service: http_status:404
@@ -74,7 +74,8 @@ ingress:
 
 Apply and restart:
 ```bash
-kubectl apply -f ~/repos/talos-configs/local-cluster-config/manifests/cloudflare-tunnel/config.yaml
+# Apply updated tunnel configuration
+kubectl apply -f /path/to/cloudflare-tunnel/config.yaml
 kubectl rollout restart deployment/cloudflared -n cloudflare-tunnel
 ```
 
@@ -83,7 +84,7 @@ kubectl rollout restart deployment/cloudflared -n cloudflare-tunnel
 Add DNS records via Terraform:
 
 ```bash
-cd ~/repos/talos-configs/local-cluster-config/manifests/terraform
+cd ~/path/to/terraform
 
 # Add to main.tf:
 # resource "cloudflare_record" "sentinel_mesh" {
@@ -111,8 +112,8 @@ terraform apply
 
 Wait ~2 minutes for DNS propagation, then access:
 
-- **Frontend**: https://sentinel-mesh.georg-nikola.com
-- **API**: https://sentinel-mesh-api.georg-nikola.com
+- **Frontend**: https://sentinel-mesh.example.com
+- **API**: https://sentinel-mesh-api.example.com
 
 You'll be prompted for the username/password you configured in step 1.
 
@@ -176,8 +177,8 @@ kubectl apply -f ingressroutes-no-auth.yaml
   ```
 
 ### DNS not resolving
-- Check DNS record: `dig sentinel-mesh.georg-nikola.com`
-- Verify Terraform applied: `cd ~/repos/talos-configs/local-cluster-config/manifests/terraform && terraform show`
+- Check DNS record: `dig sentinel-mesh.example.com`
+- Verify Terraform applied in your Terraform directory
 - Check Cloudflare Dashboard for CNAME records
 
 ### Tunnel not routing traffic
@@ -212,7 +213,7 @@ helm history sentinel-mesh -n sentinel-mesh
 
 Check the monitoring stack for Sentinel Mesh metrics:
 
-- **Grafana**: https://grafana.georg-nikola.com
-- **Prometheus**: https://prometheus.georg-nikola.com
+- **Grafana**: https://grafana.example.com
+- **Prometheus**: https://prometheus.example.com
 
 Sentinel Mesh services expose metrics on port 9090 at `/metrics` endpoint.

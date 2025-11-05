@@ -11,7 +11,7 @@ spec:
     - web
     - websecure
   routes:
-  - match: Host(`sentinel-mesh.georg-nikola.com`)
+  - match: Host(`sentinel-mesh.example.com`)
     kind: Rule
     services:
     - name: frontend
@@ -29,7 +29,7 @@ spec:
     - web
     - websecure
   routes:
-  - match: Host(`sentinel-mesh-api.georg-nikola.com`)
+  - match: Host(`sentinel-mesh-api.example.com`)
     kind: Rule
     services:
     - name: api
