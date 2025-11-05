@@ -1,0 +1,38 @@
+---
+# ServiceMonitor for Sentinel Mesh API
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sentinel-mesh-api
+  namespace: sentinel-mesh
+  labels:
+    app: api
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: api
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+---
+# ServiceMonitor for Sentinel Mesh ML Service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sentinel-mesh-ml-service
+  namespace: sentinel-mesh
+  labels:
+    app: ml-service
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: ml-service
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
