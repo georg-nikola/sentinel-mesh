@@ -68,6 +68,7 @@ func run(cmd *cobra.Command, args []string) {
 	// Health endpoints
 	router.HandleFunc("/health", healthHandler.Health).Methods("GET")
 	router.HandleFunc("/readiness", healthHandler.Readiness).Methods("GET")
+	router.HandleFunc("/ready", healthHandler.Readiness).Methods("GET") // Kubernetes-style alias
 
 	// Metrics endpoints
 	router.HandleFunc("/api/v1/metrics", metricsHandler.ListMetrics).Methods("GET")
