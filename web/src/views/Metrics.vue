@@ -1,13 +1,17 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">Metrics & Analytics</h1>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+      Metrics & Analytics
+    </h1>
 
     <!-- Time Range Selector -->
     <div class="mb-6 flex justify-end">
       <select class="block w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
         <option>Last 1 hour</option>
         <option>Last 6 hours</option>
-        <option selected>Last 24 hours</option>
+        <option selected>
+          Last 24 hours
+        </option>
         <option>Last 7 days</option>
         <option>Last 30 days</option>
       </select>
@@ -17,33 +21,53 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Request Rate -->
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Request Rate</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          Request Rate
+        </h3>
         <div class="h-64">
-          <Line :data="requestRateData" :options="chartOptions" />
+          <Line
+            :data="requestRateData"
+            :options="chartOptions"
+          />
         </div>
       </div>
 
       <!-- CPU Usage -->
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">CPU Usage</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          CPU Usage
+        </h3>
         <div class="h-64">
-          <Line :data="cpuUsageData" :options="chartOptions" />
+          <Line
+            :data="cpuUsageData"
+            :options="chartOptions"
+          />
         </div>
       </div>
 
       <!-- Memory Usage -->
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Memory Usage</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          Memory Usage
+        </h3>
         <div class="h-64">
-          <Line :data="memoryUsageData" :options="chartOptions" />
+          <Line
+            :data="memoryUsageData"
+            :options="chartOptions"
+          />
         </div>
       </div>
 
       <!-- Response Time -->
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Response Time</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          Response Time
+        </h3>
         <div class="h-64">
-          <Line :data="responseTimeData" :options="chartOptions" />
+          <Line
+            :data="responseTimeData"
+            :options="chartOptions"
+          />
         </div>
       </div>
     </div>
@@ -51,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, shallowRef } from 'vue'
+import { onMounted, shallowRef } from 'vue'
 import axios from 'axios'
 import { Line } from 'vue-chartjs'
 import { API_CONFIG } from '@/config/api'

@@ -1,20 +1,33 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">Dashboard Overview</h1>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+      Dashboard Overview
+    </h1>
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-      <div v-for="stat in stats" :key="stat.name" class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+      <div
+        v-for="stat in stats"
+        :key="stat.name"
+        class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg"
+      >
         <div class="p-5">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <component :is="stat.icon" class="h-6 w-6 text-gray-400" />
+              <component
+                :is="stat.icon"
+                class="h-6 w-6 text-gray-400"
+              />
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{{ stat.name }}</dt>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                  {{ stat.name }}
+                </dt>
                 <dd class="flex items-baseline">
-                  <div class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stat.value }}</div>
+                  <div class="text-2xl font-semibold text-gray-900 dark:text-white">
+                    {{ stat.value }}
+                  </div>
                   <div
                     class="ml-2 flex items-baseline text-sm font-semibold"
                     :class="stat.change >= 0 ? 'text-green-600' : 'text-red-600'"
@@ -33,17 +46,27 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <!-- CPU Usage Chart -->
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">CPU Usage</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          CPU Usage
+        </h3>
         <div class="h-64">
-          <Line :data="cpuChartData" :options="chartOptions" />
+          <Line
+            :data="cpuChartData"
+            :options="chartOptions"
+          />
         </div>
       </div>
 
       <!-- Memory Usage Chart -->
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Memory Usage</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          Memory Usage
+        </h3>
         <div class="h-64">
-          <Line :data="memoryChartData" :options="chartOptions" />
+          <Line
+            :data="memoryChartData"
+            :options="chartOptions"
+          />
         </div>
       </div>
     </div>
@@ -51,10 +74,16 @@
     <!-- Recent Events -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Recent Events</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+          Recent Events
+        </h3>
       </div>
       <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-        <li v-for="event in recentEvents" :key="event.id" class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <li
+          v-for="event in recentEvents"
+          :key="event.id"
+          class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700"
+        >
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <div
@@ -65,10 +94,14 @@
                   'bg-red-400': event.type === 'error',
                   'bg-blue-400': event.type === 'info',
                 }"
-              ></div>
+              />
               <div>
-                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ event.message }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ event.source }}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                  {{ event.message }}
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ event.source }}
+                </p>
               </div>
             </div>
             <span class="text-sm text-gray-500 dark:text-gray-400">{{ formatTime(event.timestamp) }}</span>
