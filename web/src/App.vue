@@ -1,5 +1,8 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div
+    id="app"
+    class="min-h-screen bg-gray-50 dark:bg-gray-900"
+  >
     <!-- Navigation -->
     <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,7 +28,10 @@
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300'
                 "
               >
-                <component :is="item.icon" class="w-4 h-4 mr-2" />
+                <component
+                  :is="item.icon"
+                  class="w-4 h-4 mr-2"
+                />
                 {{ item.name }}
               </router-link>
             </div>
@@ -38,7 +44,7 @@
               <div
                 class="w-2 h-2 rounded-full"
                 :class="connectionStatus === 'connected' ? 'bg-green-400' : 'bg-red-400'"
-              ></div>
+              />
               <span class="text-sm text-gray-500 dark:text-gray-400">
                 {{ connectionStatus === 'connected' ? 'Connected' : 'Disconnected' }}
               </span>
@@ -46,18 +52,24 @@
 
             <!-- Theme Toggle -->
             <button
-              @click="toggleTheme"
               class="p-2 text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200"
               title="Toggle theme"
+              @click="toggleTheme"
             >
-              <SunIcon v-if="theme === 'dark'" class="w-5 h-5" />
-              <MoonIcon v-else class="w-5 h-5" />
+              <SunIcon
+                v-if="theme === 'dark'"
+                class="w-5 h-5"
+              />
+              <MoonIcon
+                v-else
+                class="w-5 h-5"
+              />
             </button>
 
             <!-- Notifications -->
             <button
-              @click="showNotifications = !showNotifications"
               class="relative p-2 text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200"
+              @click="showNotifications = !showNotifications"
             >
               <BellIcon class="w-5 h-5" />
               <span
@@ -71,8 +83,8 @@
             <!-- User Menu -->
             <div class="relative">
               <button
-                @click="showUserMenu = !showUserMenu"
                 class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                @click="showUserMenu = !showUserMenu"
               >
                 <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                   <span class="text-white text-sm font-medium">U</span>
@@ -84,7 +96,10 @@
       </div>
 
       <!-- Mobile Navigation -->
-      <div class="md:hidden" v-if="showMobileMenu">
+      <div
+        v-if="showMobileMenu"
+        class="md:hidden"
+      >
         <div class="pt-2 pb-3 space-y-1">
           <router-link
             v-for="item in navigation"
@@ -114,10 +129,12 @@
       class="fixed inset-0 z-50 overflow-hidden"
       @click="showNotifications = false"
     >
-      <div class="absolute inset-0 bg-black bg-opacity-25 dark:bg-opacity-50"></div>
+      <div class="absolute inset-0 bg-black bg-opacity-25 dark:bg-opacity-50" />
       <div class="absolute right-0 top-16 w-96 bg-white dark:bg-gray-800 shadow-lg rounded-lg m-4">
         <div class="p-4">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Notifications</h3>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+            Notifications
+          </h3>
           <div class="space-y-2">
             <div
               v-for="notification in notifications"
@@ -127,13 +144,19 @@
             >
               <div class="flex justify-between items-start">
                 <div>
-                  <p class="text-sm font-medium dark:text-white">{{ notification.title }}</p>
-                  <p class="text-sm text-gray-600 dark:text-gray-300">{{ notification.message }}</p>
-                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ formatTime(notification.timestamp) }}</p>
+                  <p class="text-sm font-medium dark:text-white">
+                    {{ notification.title }}
+                  </p>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ notification.message }}
+                  </p>
+                  <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    {{ formatTime(notification.timestamp) }}
+                  </p>
                 </div>
                 <button
-                  @click.stop="dismissNotification(notification.id)"
                   class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                  @click.stop="dismissNotification(notification.id)"
                 >
                   <XMarkIcon class="w-4 h-4" />
                 </button>
@@ -150,7 +173,7 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
     >
       <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
         <span class="text-gray-700">Loading...</span>
       </div>
     </div>
@@ -159,7 +182,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
 import {
   BellIcon,
   XMarkIcon,
@@ -180,9 +202,6 @@ import { formatDistanceToNow } from 'date-fns'
 const websocketStore = useWebSocketStore()
 const notificationStore = useNotificationStore()
 const { theme, toggleTheme, initTheme } = useTheme()
-
-// Router
-const router = useRouter()
 
 // Reactive state
 const showMobileMenu = ref(false)
