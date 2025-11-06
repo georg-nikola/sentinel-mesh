@@ -121,51 +121,200 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { API_CONFIG } from '@/config/api'
 
-const nodes = ref([
-  { name: 'orbstack', status: 'Ready', cpu: 35, memory: 48, pods: 10 },
-])
+interface Node {
+  name: string
+  status: string
+  cpu: number
+  memory: number
+  pods: number
+}
 
-const services = ref([
-  { name: 'API', status: 'Running', replicas: '2/2', port: 8080, version: 'v1.0.0', deployment: 'api' },
-  { name: 'Collector', status: 'Running', replicas: '2/2', port: 8080, version: 'v1.0.0', deployment: 'collector' },
-  { name: 'ML Service', status: 'Running', replicas: '1/1', port: 8000, version: 'v1.0.0', deployment: 'ml-service' },
-  { name: 'Prometheus', status: 'Running', replicas: '1/1', port: 9090, version: 'v2.47.0', deployment: 'prometheus' },
-  { name: 'Grafana', status: 'Running', replicas: '1/1', port: 3000, version: 'v10.1.0', deployment: 'grafana' },
-  { name: 'InfluxDB', status: 'Running', replicas: '1/1', port: 8086, version: 'v2.7', deployment: 'influxdb' },
-  { name: 'Redis', status: 'Running', replicas: '1/1', port: 6379, version: 'v7', deployment: 'redis' },
-])
+interface Service {
+  name: string
+  status: string
+  replicas: string
+  port: number | string
+  version: string
+  deployment: string
+}
 
-const fetchPrometheusMetrics = async () => {
+const nodes = ref<Node[]>([])
+const services = ref<Service[]>([])
+const loading = ref(true)
+
+// Fetch node information from Prometheus node_exporter metrics
+const fetchNodes = async () => {
   try {
-    const response = await axios.get(`${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=up`, {
-      timeout: API_CONFIG.TIMEOUT,
-    })
-    if (response.data.status === 'success') {
-      console.log('Prometheus metrics:', response.data.data.result)
-      // Update service status based on prometheus metrics
-      response.data.data.result.forEach((metric: any) => {
-        const serviceName = metric.metric.job
+    // Query for node CPU usage
+    const cpuResponse = await axios.get(
+      `${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)`,
+      { timeout: API_CONFIG.TIMEOUT }
+    )
+
+    // Query for node memory usage
+    const memResponse = await axios.get(
+      `${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=100 * (1 - ((node_memory_MemAvailable_bytes) / (node_memory_MemTotal_bytes)))`,
+      { timeout: API_CONFIG.TIMEOUT }
+    )
+
+    // Query for node status (up metric)
+    const statusResponse = await axios.get(
+      `${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=up{job="node-exporter"}`,
+      { timeout: API_CONFIG.TIMEOUT }
+    )
+
+    // Query for pod count per node
+    const podsResponse = await axios.get(
+      `${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=count by(node) (kube_pod_info)`,
+      { timeout: API_CONFIG.TIMEOUT }
+    )
+
+    const nodeMap = new Map<string, Partial<Node>>()
+
+    // Process CPU data
+    if (cpuResponse.data?.data?.result) {
+      cpuResponse.data.data.result.forEach((metric: any) => {
+        const instance = metric.metric.instance?.split(':')[0] || 'unknown'
+        const cpu = Math.round(parseFloat(metric.value[1]))
+        nodeMap.set(instance, { ...nodeMap.get(instance), name: instance, cpu })
+      })
+    }
+
+    // Process memory data
+    if (memResponse.data?.data?.result) {
+      memResponse.data.data.result.forEach((metric: any) => {
+        const instance = metric.metric.instance?.split(':')[0] || 'unknown'
+        const memory = Math.round(parseFloat(metric.value[1]))
+        const existing = nodeMap.get(instance) || {}
+        nodeMap.set(instance, { ...existing, memory })
+      })
+    }
+
+    // Process status data
+    if (statusResponse.data?.data?.result) {
+      statusResponse.data.data.result.forEach((metric: any) => {
+        const instance = metric.metric.instance?.split(':')[0] || 'unknown'
         const isUp = metric.value[1] === '1'
-        const service = services.value.find(s =>
-          s.name.toLowerCase().includes(serviceName.toLowerCase())
-        )
-        if (service) {
-          service.status = isUp ? 'Running' : 'Down'
+        const existing = nodeMap.get(instance) || {}
+        nodeMap.set(instance, { ...existing, status: isUp ? 'Ready' : 'NotReady' })
+      })
+    }
+
+    // Process pod count data
+    if (podsResponse.data?.data?.result) {
+      podsResponse.data.data.result.forEach((metric: any) => {
+        const nodeName = metric.metric.node
+        const pods = parseInt(metric.value[1])
+        // Try to find matching node by name
+        for (const [instance, node] of nodeMap.entries()) {
+          if (instance.includes(nodeName) || nodeName.includes(instance)) {
+            nodeMap.set(instance, { ...node, pods })
+            break
+          }
         }
       })
     }
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
-      console.warn('Prometheus request timed out')
-    } else {
-      console.error('Failed to fetch Prometheus metrics:', error)
+
+    nodes.value = Array.from(nodeMap.values()).map(node => ({
+      name: node.name || 'unknown',
+      status: node.status || 'Unknown',
+      cpu: node.cpu || 0,
+      memory: node.memory || 0,
+      pods: node.pods || 0
+    }))
+
+    // If no nodes found from metrics, try kube_node_info
+    if (nodes.value.length === 0) {
+      const nodeInfoResponse = await axios.get(
+        `${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=kube_node_info`,
+        { timeout: API_CONFIG.TIMEOUT }
+      )
+
+      if (nodeInfoResponse.data?.data?.result) {
+        nodes.value = nodeInfoResponse.data.data.result.map((metric: any) => ({
+          name: metric.metric.node || 'unknown',
+          status: 'Ready',
+          cpu: 0,
+          memory: 0,
+          pods: 0
+        }))
+      }
     }
+  } catch (error) {
+    console.error('Failed to fetch node data:', error)
+    // Fallback to basic node info
+    nodes.value = [{ name: 'Node data unavailable', status: 'Unknown', cpu: 0, memory: 0, pods: 0 }]
+  }
+}
+
+// Fetch service information from Prometheus up metrics
+const fetchServices = async () => {
+  try {
+    const response = await axios.get(
+      `${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=up`,
+      { timeout: API_CONFIG.TIMEOUT }
+    )
+
+    if (response.data?.status === 'success') {
+      const serviceMap = new Map<string, Service>()
+
+      response.data.data.result.forEach((metric: any) => {
+        const job = metric.metric.job
+        if (!job || job === 'node-exporter') return // Skip node-exporter
+
+        const instance = metric.metric.instance || ''
+        const isUp = metric.value[1] === '1'
+        const port = instance.includes(':') ? instance.split(':')[1] : '8080'
+
+        // Format service name
+        let serviceName = job
+          .split('-')
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ')
+
+        // Get version from metric if available
+        const version = metric.metric.version || 'v1.0.0'
+
+        if (!serviceMap.has(job)) {
+          serviceMap.set(job, {
+            name: serviceName,
+            status: isUp ? 'Running' : 'Down',
+            replicas: '1/1',
+            port: port,
+            version: version,
+            deployment: job
+          })
+        } else {
+          // Update status if service is down
+          const existing = serviceMap.get(job)!
+          if (!isUp) {
+            existing.status = 'Down'
+          }
+        }
+      })
+
+      services.value = Array.from(serviceMap.values()).sort((a, b) =>
+        a.name.localeCompare(b.name)
+      )
+    }
+  } catch (error) {
+    console.error('Failed to fetch service data:', error)
+    services.value = []
+  }
+}
+
+const fetchInfrastructure = async () => {
+  loading.value = true
+  try {
+    await Promise.all([fetchNodes(), fetchServices()])
+  } finally {
+    loading.value = false
   }
 }
 
 onMounted(() => {
-  fetchPrometheusMetrics()
-  // Refresh every 15 seconds
-  setInterval(fetchPrometheusMetrics, 15000)
+  fetchInfrastructure()
+  // Refresh every 30 seconds
+  setInterval(fetchInfrastructure, 30000)
 })
 </script>
