@@ -65,6 +65,14 @@ func run(cmd *cobra.Command, args []string) {
 	metricsHandler := handlers.NewMetricsHandler()
 	queryHandler := handlers.NewQueryHandler()
 
+	// Infrastructure handler with fallback
+	var infrastructureHandler *handlers.InfrastructureHandler
+	if infra, err := handlers.NewInfrastructureHandler(); err == nil {
+		infrastructureHandler = infra
+	} else {
+		logrus.WithError(err).Warn("Failed to initialize infrastructure handler, using fallback")
+	}
+
 	// Health endpoints
 	router.HandleFunc("/health", healthHandler.Health).Methods("GET")
 	router.HandleFunc("/readiness", healthHandler.Readiness).Methods("GET")
@@ -81,6 +89,11 @@ func run(cmd *cobra.Command, args []string) {
 	// Analytics endpoints
 	router.HandleFunc("/api/v1/analytics/slo", metricsHandler.GetSLOStatus).Methods("GET")
 	router.HandleFunc("/api/v1/analytics/anomalies", metricsHandler.GetAnomalies).Methods("GET")
+
+	// Infrastructure endpoints
+	if infrastructureHandler != nil {
+		router.HandleFunc("/api/v1/infrastructure", infrastructureHandler.GetInfrastructure).Methods("GET")
+	}
 
 	// Prometheus metrics
 	router.Handle("/metrics", promhttp.Handler())
