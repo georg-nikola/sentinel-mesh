@@ -18,8 +18,8 @@ RUN npm run build
 # Stage 2: Serve with nginx
 FROM nginx:1.25-alpine
 
-# Remove default nginx config and entrypoint scripts to avoid permission issues with non-root user
-RUN rm -f /etc/nginx/conf.d/default.conf && \
+# Remove docker entrypoint and default config to avoid permission issues with non-root user
+RUN rm -f /docker-entrypoint.sh /etc/nginx/conf.d/default.conf && \
     rm -rf /docker-entrypoint.d/
 
 # Copy custom nginx configuration
