@@ -28,6 +28,28 @@ When making ANY changes to this repository, you MUST ensure:
 
 **If you accidentally commit sensitive information, immediately rewrite Git history using `git filter-branch` before anyone clones the repository.**
 
+## Repository Architecture: Public Repo + Private Overlays
+
+**sentinel-mesh** (this repo - PUBLIC):
+- Uses `example.com` placeholders for all domains
+- Generic infrastructure descriptions only
+- Safe for public consumption
+
+**talos-configs** (LOCAL ONLY - NOT REMOTELY HOSTED):
+- Contains actual domain names and infrastructure specifics
+- Kustomize overlays for production values
+- Stored locally only (no GitHub remote)
+- Never configure remote for this repository
+- Used by ArgoCD to apply environment-specific configurations
+
+**How GitOps Works**:
+1. sentinel-mesh repo: Public, sanitized with `example.com`
+2. talos-configs repo: Local Kustomize overlays with actual domains
+3. ArgoCD Application points to talos-configs for production deployment
+4. Kustomize patches override sentinel-mesh defaults with real values
+
+This architecture keeps the public repository clean while enabling production-specific configurations.
+
 ## Project Overview
 
 Sentinel Mesh is a cloud-native distributed system monitoring platform built for Kubernetes environments. It combines real-time observability with machine learning-powered security intelligence to provide comprehensive monitoring, anomaly detection, and automated incident response capabilities.
