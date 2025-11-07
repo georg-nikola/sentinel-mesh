@@ -30,7 +30,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: ml-service
-        image: ghcr.io/georg-nikola/sentinel-mesh/ml-service:0.2.0
+        image: ghcr.io/georg-nikola/sentinel-mesh/ml-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000

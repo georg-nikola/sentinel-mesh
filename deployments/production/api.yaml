@@ -30,7 +30,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: api
-        image: ghcr.io/georg-nikola/sentinel-mesh/api:0.2.1
+        image: ghcr.io/georg-nikola/sentinel-mesh/api:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
