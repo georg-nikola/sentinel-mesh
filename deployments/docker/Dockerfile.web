@@ -25,7 +25,7 @@ RUN rm -f /docker-entrypoint.sh /etc/nginx/conf.d/default.conf && \
     rm -rf /docker-entrypoint.d/
 
 # Copy custom nginx config
-COPY deployments/docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY web/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built assets from builder
 COPY --from=builder /build/dist /usr/share/nginx/html
