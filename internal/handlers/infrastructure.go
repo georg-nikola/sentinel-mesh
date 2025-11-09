@@ -161,11 +161,17 @@ func (h *InfrastructureHandler) fetchServices(ctx context.Context) ([]ServiceInf
 			}
 		}
 
+		// Extract port from container ports if available
+		port := "8080"
+		if len(deployment.Spec.Template.Spec.Containers) > 0 && len(deployment.Spec.Template.Spec.Containers[0].Ports) > 0 {
+			port = fmt.Sprintf("%d", deployment.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort)
+		}
+
 		service := ServiceInfo{
 			Name:       deployment.Name,
 			Status:     status,
 			Replicas:   replicas,
-			Port:       "8080",
+			Port:       port,
 			Version:    version,
 			Deployment: deployment.Name,
 			Namespace:  deployment.Namespace,

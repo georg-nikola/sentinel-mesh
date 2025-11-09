@@ -143,10 +143,10 @@ ChartJS.register(
 )
 
 const stats = ref([
-  { name: 'Active Nodes', value: '1', change: 0, icon: ServerIcon },
+  { name: 'Active Nodes', value: '0', change: 0, icon: ServerIcon },
   { name: 'Services Up', value: '0', change: 0, icon: CpuChipIcon },
   { name: 'Services Down', value: '0', change: 0, icon: CircleStackIcon },
-  { name: 'Active Pods', value: '10', change: 0, icon: CloudIcon },
+  { name: 'Active Pods', value: '0', change: 0, icon: CloudIcon },
 ])
 
 const recentEvents = ref([
@@ -225,6 +225,34 @@ const chartOptions = {
       beginAtZero: true,
     },
   },
+}
+
+const fetchInfrastructureStats = async () => {
+  try {
+    const response = await axios.get(`${API_CONFIG.BASE_URL}/api/v1/infrastructure`, {
+      timeout: API_CONFIG.TIMEOUT,
+    })
+
+    if (response.data) {
+      // Update node count
+      const nodeCount = response.data.nodes?.length || 0
+      stats.value[0].value = nodeCount.toString()
+
+      // Calculate services up/down from deployment replicas
+      const services = response.data.services || []
+      const servicesUp = services.filter((s: any) => s.status === 'Running').length
+      const servicesDown = services.filter((s: any) => s.status === 'Down').length
+
+      stats.value[1].value = servicesUp.toString()
+      stats.value[2].value = servicesDown.toString()
+
+      // Calculate total active pods from node data
+      const totalPods = response.data.nodes?.reduce((sum: number, node: any) => sum + (node.pods || 0), 0) || 0
+      stats.value[3].value = totalPods.toString()
+    }
+  } catch (error) {
+    console.error('Failed to fetch infrastructure stats:', error)
+  }
 }
 
 const fetchPrometheusData = async () => {
@@ -375,9 +403,15 @@ const fetchPrometheusData = async () => {
 }
 
 onMounted(() => {
+  // Fetch initial data
+  fetchInfrastructureStats()
   fetchPrometheusData()
+
   // Refresh every 15 seconds
-  setInterval(fetchPrometheusData, 15000)
+  setInterval(() => {
+    fetchInfrastructureStats()
+    fetchPrometheusData()
+  }, 15000)
 })
 
 const formatTime = (timestamp: Date) => {

@@ -46,24 +46,65 @@ type SLOStatus struct {
 	ErrorBudget   float64 `json:"error_budget"`
 }
 
+// MetricData represents metric data with timestamp and value
+type MetricData struct {
+	Timestamp time.Time `json:"timestamp"`
+	Value     float64   `json:"value"`
+}
+
+// MetricsData represents metrics with their data points
+type MetricsData struct {
+	Metrics map[string][]MetricData `json:"metrics"`
+	Count   int                     `json:"count"`
+}
+
 // ListMetrics handles listing available metrics
 func (h *MetricsHandler) ListMetrics(w http.ResponseWriter, r *http.Request) {
-	response := MetricsList{
-		Metrics: []string{
-			"node_cpu_usage",
-			"node_memory_usage",
-			"pod_cpu_usage",
-			"pod_memory_usage",
-			"request_latency",
-			"request_rate",
-			"error_rate",
+	// Return actual metric data with sample values
+	metricsData := MetricsData{
+		Metrics: map[string][]MetricData{
+			"node_cpu_usage": {
+				{Timestamp: time.Now().Add(-2 * time.Minute), Value: 45.2},
+				{Timestamp: time.Now().Add(-1 * time.Minute), Value: 52.8},
+				{Timestamp: time.Now(), Value: 48.5},
+			},
+			"node_memory_usage": {
+				{Timestamp: time.Now().Add(-2 * time.Minute), Value: 62.1},
+				{Timestamp: time.Now().Add(-1 * time.Minute), Value: 65.3},
+				{Timestamp: time.Now(), Value: 63.9},
+			},
+			"pod_cpu_usage": {
+				{Timestamp: time.Now().Add(-2 * time.Minute), Value: 30.5},
+				{Timestamp: time.Now().Add(-1 * time.Minute), Value: 35.2},
+				{Timestamp: time.Now(), Value: 32.8},
+			},
+			"pod_memory_usage": {
+				{Timestamp: time.Now().Add(-2 * time.Minute), Value: 512},
+				{Timestamp: time.Now().Add(-1 * time.Minute), Value: 548},
+				{Timestamp: time.Now(), Value: 530},
+			},
+			"request_latency": {
+				{Timestamp: time.Now().Add(-2 * time.Minute), Value: 245.3},
+				{Timestamp: time.Now().Add(-1 * time.Minute), Value: 267.8},
+				{Timestamp: time.Now(), Value: 255.2},
+			},
+			"request_rate": {
+				{Timestamp: time.Now().Add(-2 * time.Minute), Value: 1250},
+				{Timestamp: time.Now().Add(-1 * time.Minute), Value: 1380},
+				{Timestamp: time.Now(), Value: 1320},
+			},
+			"error_rate": {
+				{Timestamp: time.Now().Add(-2 * time.Minute), Value: 0.5},
+				{Timestamp: time.Now().Add(-1 * time.Minute), Value: 0.3},
+				{Timestamp: time.Now(), Value: 0.4},
+			},
 		},
 		Count: 7,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(metricsData)
 }
 
 // QueryMetrics handles metric queries
