@@ -175,190 +175,174 @@ const chartOptions = {
 
 const fetchMetrics = async () => {
   try {
-    const timestamp = new Date().toLocaleTimeString()
-
-    // Fetch HTTP requests rate
-    const reqQuery = await axios.get(`${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=rate(promhttp_metric_handler_requests_total[5m])`, {
+    // Fetch all metrics from our API
+    const response = await axios.get(`${API_CONFIG.BASE_URL}/api/v1/metrics`, {
       timeout: API_CONFIG.TIMEOUT,
     })
-    if (reqQuery.data.status === 'success' && reqQuery.data.data.result.length > 0) {
-      const reqRate = parseFloat(reqQuery.data.data.result[0].value[1])
 
-      // Replace placeholder data on first update
-      if (requestRateData.value.labels[0] === '...') {
-        requestRateData.value = {
-          labels: [timestamp],
-          datasets: [{
-            label: 'Requests/sec',
-            data: [reqRate * 60],
-            borderColor: 'rgb(99, 102, 241)',
-            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-            fill: true,
-            tension: 0.4,
-          }],
-        }
-      } else {
-        const newLabels = [...requestRateData.value.labels, timestamp]
-        const newData = [...requestRateData.value.datasets[0].data, reqRate * 60]
+    if (response.data && response.data.metrics) {
+      const metrics = response.data.metrics
+      const timestamp = new Date().toLocaleTimeString()
 
-        if (newLabels.length > 20) {
-          newLabels.shift()
-          newData.shift()
-        }
+      // Update Request Rate chart (using request_rate metric)
+      if (metrics.request_rate && metrics.request_rate.length > 0) {
+        const latestValue = metrics.request_rate[metrics.request_rate.length - 1].value
 
-        requestRateData.value = {
-          labels: newLabels,
-          datasets: [{
-            label: 'Requests/sec',
-            data: newData,
-            borderColor: 'rgb(99, 102, 241)',
-            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-            fill: true,
-            tension: 0.4,
-          }],
+        if (requestRateData.value.labels[0] === '...') {
+          requestRateData.value = {
+            labels: [timestamp],
+            datasets: [{
+              label: 'Requests/sec',
+              data: [latestValue],
+              borderColor: 'rgb(99, 102, 241)',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              fill: true,
+              tension: 0.4,
+            }],
+          }
+        } else {
+          const newLabels = [...requestRateData.value.labels, timestamp]
+          const newData = [...requestRateData.value.datasets[0].data, latestValue]
+
+          if (newLabels.length > 20) {
+            newLabels.shift()
+            newData.shift()
+          }
+
+          requestRateData.value = {
+            labels: newLabels,
+            datasets: [{
+              label: 'Requests/sec',
+              data: newData,
+              borderColor: 'rgb(99, 102, 241)',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              fill: true,
+              tension: 0.4,
+            }],
+          }
         }
       }
-    }
 
-    // Fetch CPU (goroutines as proxy)
-    const cpuQuery = await axios.get(`${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=go_goroutines`, {
-      timeout: API_CONFIG.TIMEOUT,
-    })
-    if (cpuQuery.data.status === 'success') {
-      const totalGoroutines = cpuQuery.data.data.result.reduce((acc: number, r: any) => {
-        return acc + parseFloat(r.value[1])
-      }, 0)
-      const cpuProxy = Math.min((totalGoroutines / 10), 100)
+      // Update CPU Usage chart
+      if (metrics.node_cpu_usage && metrics.node_cpu_usage.length > 0) {
+        const latestValue = metrics.node_cpu_usage[metrics.node_cpu_usage.length - 1].value
 
-      // Replace placeholder data on first update
-      if (cpuUsageData.value.labels[0] === '...') {
-        cpuUsageData.value = {
-          labels: [timestamp],
-          datasets: [{
-            label: 'CPU %',
-            data: [cpuProxy],
-            borderColor: 'rgb(239, 68, 68)',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            fill: true,
-            tension: 0.4,
-          }],
-        }
-      } else {
-        const newLabels = [...cpuUsageData.value.labels, timestamp]
-        const newData = [...cpuUsageData.value.datasets[0].data, cpuProxy]
+        if (cpuUsageData.value.labels[0] === '...') {
+          cpuUsageData.value = {
+            labels: [timestamp],
+            datasets: [{
+              label: 'CPU %',
+              data: [latestValue],
+              borderColor: 'rgb(239, 68, 68)',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              fill: true,
+              tension: 0.4,
+            }],
+          }
+        } else {
+          const newLabels = [...cpuUsageData.value.labels, timestamp]
+          const newData = [...cpuUsageData.value.datasets[0].data, latestValue]
 
-        if (newLabels.length > 20) {
-          newLabels.shift()
-          newData.shift()
-        }
+          if (newLabels.length > 20) {
+            newLabels.shift()
+            newData.shift()
+          }
 
-        cpuUsageData.value = {
-          labels: newLabels,
-          datasets: [{
-            label: 'CPU %',
-            data: newData,
-            borderColor: 'rgb(239, 68, 68)',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            fill: true,
-            tension: 0.4,
-          }],
+          cpuUsageData.value = {
+            labels: newLabels,
+            datasets: [{
+              label: 'CPU %',
+              data: newData,
+              borderColor: 'rgb(239, 68, 68)',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              fill: true,
+              tension: 0.4,
+            }],
+          }
         }
       }
-    }
 
-    // Fetch Memory
-    const memQuery = await axios.get(`${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=go_memstats_alloc_bytes`, {
-      timeout: API_CONFIG.TIMEOUT,
-    })
-    if (memQuery.data.status === 'success') {
-      const totalMem = memQuery.data.data.result.reduce((acc: number, r: any) => {
-        return acc + parseFloat(r.value[1])
-      }, 0)
-      const memMB = totalMem / 1024 / 1024
+      // Update Memory Usage chart
+      if (metrics.node_memory_usage && metrics.node_memory_usage.length > 0) {
+        const latestValue = metrics.node_memory_usage[metrics.node_memory_usage.length - 1].value
 
-      // Replace placeholder data on first update
-      if (memoryUsageData.value.labels[0] === '...') {
-        memoryUsageData.value = {
-          labels: [timestamp],
-          datasets: [{
-            label: 'Memory MB',
-            data: [memMB],
-            borderColor: 'rgb(16, 185, 129)',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            fill: true,
-            tension: 0.4,
-          }],
-        }
-      } else {
-        const newLabels = [...memoryUsageData.value.labels, timestamp]
-        const newData = [...memoryUsageData.value.datasets[0].data, memMB]
+        if (memoryUsageData.value.labels[0] === '...') {
+          memoryUsageData.value = {
+            labels: [timestamp],
+            datasets: [{
+              label: 'Memory MB',
+              data: [latestValue],
+              borderColor: 'rgb(16, 185, 129)',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              fill: true,
+              tension: 0.4,
+            }],
+          }
+        } else {
+          const newLabels = [...memoryUsageData.value.labels, timestamp]
+          const newData = [...memoryUsageData.value.datasets[0].data, latestValue]
 
-        if (newLabels.length > 20) {
-          newLabels.shift()
-          newData.shift()
-        }
+          if (newLabels.length > 20) {
+            newLabels.shift()
+            newData.shift()
+          }
 
-        memoryUsageData.value = {
-          labels: newLabels,
-          datasets: [{
-            label: 'Memory MB',
-            data: newData,
-            borderColor: 'rgb(16, 185, 129)',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            fill: true,
-            tension: 0.4,
-          }],
+          memoryUsageData.value = {
+            labels: newLabels,
+            datasets: [{
+              label: 'Memory MB',
+              data: newData,
+              borderColor: 'rgb(16, 185, 129)',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              fill: true,
+              tension: 0.4,
+            }],
+          }
         }
       }
-    }
 
-    // Fetch Response Time (using scrape duration as proxy)
-    const respQuery = await axios.get(`${API_CONFIG.PROMETHEUS_URL}/api/v1/query?query=scrape_duration_seconds`, {
-      timeout: API_CONFIG.TIMEOUT,
-    })
-    if (respQuery.data.status === 'success' && respQuery.data.data.result.length > 0) {
-      const avgDuration = respQuery.data.data.result.reduce((acc: number, r: any) => {
-        return acc + parseFloat(r.value[1])
-      }, 0) / respQuery.data.data.result.length
+      // Update Response Time chart (using request_latency metric)
+      if (metrics.request_latency && metrics.request_latency.length > 0) {
+        const latestValue = metrics.request_latency[metrics.request_latency.length - 1].value
 
-      // Replace placeholder data on first update
-      if (responseTimeData.value.labels[0] === '...') {
-        responseTimeData.value = {
-          labels: [timestamp],
-          datasets: [{
-            label: 'Response Time (ms)',
-            data: [avgDuration * 1000],
-            borderColor: 'rgb(245, 158, 11)',
-            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-            fill: true,
-            tension: 0.4,
-          }],
-        }
-      } else {
-        const newLabels = [...responseTimeData.value.labels, timestamp]
-        const newData = [...responseTimeData.value.datasets[0].data, avgDuration * 1000]
+        if (responseTimeData.value.labels[0] === '...') {
+          responseTimeData.value = {
+            labels: [timestamp],
+            datasets: [{
+              label: 'Response Time (ms)',
+              data: [latestValue],
+              borderColor: 'rgb(245, 158, 11)',
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              fill: true,
+              tension: 0.4,
+            }],
+          }
+        } else {
+          const newLabels = [...responseTimeData.value.labels, timestamp]
+          const newData = [...responseTimeData.value.datasets[0].data, latestValue]
 
-        if (newLabels.length > 20) {
-          newLabels.shift()
-          newData.shift()
-        }
+          if (newLabels.length > 20) {
+            newLabels.shift()
+            newData.shift()
+          }
 
-        responseTimeData.value = {
-          labels: newLabels,
-          datasets: [{
-            label: 'Response Time (ms)',
-            data: newData,
-            borderColor: 'rgb(245, 158, 11)',
-            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-            fill: true,
-            tension: 0.4,
-          }],
+          responseTimeData.value = {
+            labels: newLabels,
+            datasets: [{
+              label: 'Response Time (ms)',
+              data: newData,
+              borderColor: 'rgb(245, 158, 11)',
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              fill: true,
+              tension: 0.4,
+            }],
+          }
         }
       }
     }
   } catch (error) {
     if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
-      console.warn('Prometheus metrics request timed out')
+      console.warn('Metrics request timed out')
     } else {
       console.error('Failed to fetch metrics:', error)
     }
