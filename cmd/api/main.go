@@ -79,20 +79,20 @@ func run(cmd *cobra.Command, args []string) {
 	router.HandleFunc("/ready", healthHandler.Readiness).Methods("GET") // Kubernetes-style alias
 
 	// Metrics endpoints
-	router.HandleFunc("/api/v1/metrics", metricsHandler.ListMetrics).Methods("GET")
-	router.HandleFunc("/api/v1/metrics/query", metricsHandler.QueryMetrics).Methods("POST")
+	router.HandleFunc("/v1/metrics", metricsHandler.ListMetrics).Methods("GET")
+	router.HandleFunc("/v1/metrics/query", metricsHandler.QueryMetrics).Methods("POST")
 
 	// Query endpoints
-	router.HandleFunc("/api/v1/query/range", queryHandler.QueryRange).Methods("POST")
-	router.HandleFunc("/api/v1/query/instant", queryHandler.QueryInstant).Methods("POST")
+	router.HandleFunc("/v1/query/range", queryHandler.QueryRange).Methods("POST")
+	router.HandleFunc("/v1/query/instant", queryHandler.QueryInstant).Methods("POST")
 
 	// Analytics endpoints
-	router.HandleFunc("/api/v1/analytics/slo", metricsHandler.GetSLOStatus).Methods("GET")
-	router.HandleFunc("/api/v1/analytics/anomalies", metricsHandler.GetAnomalies).Methods("GET")
+	router.HandleFunc("/v1/analytics/slo", metricsHandler.GetSLOStatus).Methods("GET")
+	router.HandleFunc("/v1/analytics/anomalies", metricsHandler.GetAnomalies).Methods("GET")
 
 	// Infrastructure endpoints
 	if infrastructureHandler != nil {
-		router.HandleFunc("/api/v1/infrastructure", infrastructureHandler.GetInfrastructure).Methods("GET")
+		router.HandleFunc("/v1/infrastructure", infrastructureHandler.GetInfrastructure).Methods("GET")
 	}
 
 	// Prometheus metrics
