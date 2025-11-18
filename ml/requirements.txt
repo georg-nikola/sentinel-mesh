@@ -41,7 +41,7 @@ statsmodels==0.14.0
 prophet==1.1.4
 
 # Anomaly detection libraries
-pyod==1.1.0
+pyod==2.0.5
 
 # Testing
 pytest==7.4.0
