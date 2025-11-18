@@ -176,7 +176,7 @@ const chartOptions = {
 const fetchMetrics = async () => {
   try {
     // Fetch all metrics from our API
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/api/v1/metrics`, {
+    const response = await axios.get(`${API_CONFIG.BASE_URL}/v1/metrics`, {
       timeout: API_CONFIG.TIMEOUT,
     })
 
