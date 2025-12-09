@@ -137,7 +137,7 @@ spec:
     spec:
       containers:
       - name: prometheus
-        image: prom/prometheus:v3.7.2
+        image: prom/prometheus:v3.8.0
         ports:
         - containerPort: 9090
         args:
