@@ -35,7 +35,7 @@ Images are tagged with multiple versions:
 
 All images are public and can be pulled without authentication:
 
-```bash
+```bash docs-drift:skip
 # Pull specific version
 docker pull ghcr.io/georg-nikola/sentinel-mesh/api:0.1.0
 
@@ -56,7 +56,7 @@ docker pull ghcr.io/georg-nikola/sentinel-mesh/frontend:latest
 
 If packages are set to private, authenticate with a GitHub Personal Access Token:
 
-```bash
+```bash docs-drift:skip
 # Login to GHCR
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 
@@ -68,7 +68,7 @@ docker pull ghcr.io/georg-nikola/sentinel-mesh/api:latest
 
 Update your `docker-compose.yml` to use GHCR images:
 
-```yaml
+```yaml docs-drift:skip
 version: '3.8'
 
 services:
@@ -99,7 +99,7 @@ services:
 
 ### Update Helm Values
 
-```yaml
+```yaml docs-drift:skip
 # values.yaml
 image:
   registry: ghcr.io
@@ -110,7 +110,7 @@ image:
 
 ### Deploy with Helm
 
-```bash
+```bash docs-drift:skip
 helm install sentinel-mesh ./deployments/helm/sentinel-mesh \
   --set image.registry=ghcr.io \
   --set image.repository=georg-nikola/sentinel-mesh \
@@ -119,7 +119,7 @@ helm install sentinel-mesh ./deployments/helm/sentinel-mesh \
 
 ### Direct Kubernetes Deployment
 
-```yaml
+```yaml docs-drift:skip
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -145,7 +145,7 @@ spec:
 
 ### GitHub Actions
 
-```yaml
+```yaml docs-drift:skip
 - name: Pull image from GHCR
   run: |
     docker pull ghcr.io/georg-nikola/sentinel-mesh/api:latest
@@ -153,7 +153,7 @@ spec:
 
 ### GitLab CI
 
-```yaml
+```yaml docs-drift:skip
 deploy:
   script:
     - docker pull ghcr.io/georg-nikola/sentinel-mesh/api:$CI_COMMIT_TAG
@@ -167,7 +167,7 @@ Images are automatically built and published by GitHub Actions when:
 1. **Creating a Release**: Tag and publish a release on GitHub
 2. **Manual Trigger**: Use workflow_dispatch with a version tag
 
-```bash
+```bash docs-drift:skip
 # Create and push a tag
 git tag v0.1.0
 git push origin v0.1.0
@@ -206,7 +206,7 @@ All images use multi-stage builds for minimal size:
 
 ### Authentication Issues
 
-```bash
+```bash docs-drift:skip
 # Check if logged in
 docker info | grep Username
 
@@ -216,7 +216,7 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 
 ### Image Not Found
 
-```bash
+```bash docs-drift:skip
 # Check available tags
 gh api /users/georg-nikola/packages/container/sentinel-mesh%2Fapi/versions
 

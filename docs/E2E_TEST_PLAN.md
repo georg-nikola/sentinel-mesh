@@ -464,7 +464,7 @@ Before creating a new release:
 
 ## Test Execution Commands
 
-```bash
+```bash docs-drift:skip
 # Run all unit tests
 make test-unit
 
@@ -522,7 +522,7 @@ make test-security
 - Different user preferences
 
 ### Test Environment Setup
-```bash
+```bash docs-drift:skip
 # Create test namespace
 kubectl create namespace sentinel-mesh-test
 

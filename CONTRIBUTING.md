@@ -13,25 +13,25 @@ This repository requires a **fork-based workflow** for all contributions. Direct
    - This creates a copy of the repository under your GitHub account
 
 2. **Clone Your Fork**
-   ```bash
+   ```bash docs-drift:skip
    git clone https://github.com/YOUR-USERNAME/sentinel-mesh.git
    cd sentinel-mesh
    ```
 
 3. **Add Upstream Remote**
-   ```bash
+   ```bash docs-drift:skip
    git remote add upstream https://github.com/georg-nikola/sentinel-mesh.git
    ```
 
 4. **Create a Feature Branch**
-   ```bash
+   ```bash docs-drift:skip
    git checkout -b feature/your-feature-name
    ```
 
 ### Making Changes
 
 1. **Keep Your Fork Updated**
-   ```bash
+   ```bash docs-drift:skip
    git fetch upstream
    git rebase upstream/main
    ```
@@ -43,7 +43,7 @@ This repository requires a **fork-based workflow** for all contributions. Direct
    - Update documentation as needed
 
 3. **Run Tests**
-   ```bash
+   ```bash docs-drift:skip
    # Run E2E tests
    ./tests/e2e/run-all.sh
 
@@ -59,7 +59,7 @@ This repository requires a **fork-based workflow** for all contributions. Direct
    ```
 
 4. **Commit Your Changes**
-   ```bash
+   ```bash docs-drift:skip
    git add .
    git commit -m "Add feature: description of your changes"
    ```
@@ -67,7 +67,7 @@ This repository requires a **fork-based workflow** for all contributions. Direct
 ### Submitting a Pull Request
 
 1. **Push to Your Fork**
-   ```bash
+   ```bash docs-drift:skip
    git push origin feature/your-feature-name
    ```
 

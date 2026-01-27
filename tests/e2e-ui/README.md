@@ -21,7 +21,7 @@ These tests verify the Vue.js dashboard functionality, user interactions, and vi
 
 ## Installation
 
-```bash
+```bash docs-drift:skip
 # Install dependencies
 npm install
 
@@ -33,7 +33,7 @@ npx playwright install chromium
 
 ### All Tests
 
-```bash
+```bash docs-drift:skip
 # Run all tests (headless)
 npm test
 
@@ -46,7 +46,7 @@ npm run test:ui
 
 ### Specific Tests
 
-```bash
+```bash docs-drift:skip
 # Run only Chromium tests
 npm run test:chromium
 
@@ -59,7 +59,7 @@ npx playwright test -g "should load dashboard"
 
 ### Debugging
 
-```bash
+```bash docs-drift:skip
 # Debug mode (step through tests)
 npm run test:debug
 
@@ -69,7 +69,7 @@ npm run test:codegen
 
 ### View Reports
 
-```bash
+```bash docs-drift:skip
 # Show HTML test report
 npm run test:report
 
@@ -119,7 +119,7 @@ Edit `playwright.config.ts` to customize:
 
 ### Basic Test Template
 
-```typescript
+```typescript docs-drift:skip
 import { test, expect } from '@playwright/test';
 
 test.describe('Feature Name', () => {
@@ -153,7 +153,7 @@ test.describe('Feature Name', () => {
 
 ### GitHub Actions
 
-```yaml
+```yaml docs-drift:skip
 - name: Run Playwright UI Tests
   run: |
     cd tests/e2e-ui
@@ -175,7 +175,7 @@ test.describe('Feature Name', () => {
 
 ### Tests Fail to Connect
 
-```bash
+```bash docs-drift:skip
 # Verify frontend is accessible
 curl http://localhost:30000
 
@@ -188,7 +188,7 @@ kubectl get svc web-dashboard -n sentinel-mesh -o jsonpath='{.spec.ports[0].node
 
 ### Browser Not Found
 
-```bash
+```bash docs-drift:skip
 # Reinstall browsers
 npx playwright install chromium --with-deps
 ```

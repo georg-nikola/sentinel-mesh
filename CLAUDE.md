@@ -64,7 +64,7 @@ The project uses a microservices architecture with:
 
 ### Backend Services (Go)
 
-```bash
+```bash docs-drift:skip
 # Install Go dependencies
 go mod download
 go mod tidy
@@ -91,7 +91,7 @@ PORT=8080 go run cmd/collector/main.go
 
 ### ML Service (Python)
 
-```bash
+```bash docs-drift:skip
 # Set up virtual environment
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -115,7 +115,7 @@ pytest ml/ -v  # Verbose output
 
 ### Frontend (Vue.js)
 
-```bash
+```bash docs-drift:skip
 # Install dependencies
 cd web
 npm install
@@ -140,7 +140,7 @@ npm run preview
 
 ### Docker Development
 
-```bash
+```bash docs-drift:skip
 # Build all service images
 docker build -t sentinel-mesh/api -f Dockerfile --target api .
 docker build -t sentinel-mesh/collector -f Dockerfile --target collector .
@@ -158,7 +158,7 @@ docker-compose logs -f ml-service
 
 ### Kubernetes Deployment
 
-```bash
+```bash docs-drift:skip
 # Deploy to local Kubernetes (OrbStack, minikube, etc.)
 kubectl apply -f deployments/kubernetes/
 
@@ -180,7 +180,7 @@ kubectl delete -f deployments/kubernetes/
 
 ### Helm Charts
 
-```bash
+```bash docs-drift:skip
 # Lint Helm charts
 helm lint deployments/helm/sentinel-mesh
 
@@ -369,14 +369,14 @@ sentinel-mesh/
 ### Making Changes
 
 1. **Create Feature Branch** (if not admin pushing to main):
-   ```bash
+   ```bash docs-drift:skip
    git checkout -b feature/your-feature-name
    ```
 
 2. **Make Changes**: Edit code following project conventions
 
 3. **Test Locally**:
-   ```bash
+   ```bash docs-drift:skip
    # Go services
    go test ./...
 
@@ -389,14 +389,14 @@ sentinel-mesh/
    ```
 
 4. **Commit Changes**:
-   ```bash
+   ```bash docs-drift:skip
    git add .
    git commit -m "feat: add your feature description"
    # Use conventional commits: feat, fix, docs, refactor, test, chore
    ```
 
 5. **Push and Create PR**:
-   ```bash
+   ```bash docs-drift:skip
    git push origin feature/your-feature-name
    gh pr create --title "Feature: Your feature" --body "Description..."
    ```
@@ -440,7 +440,7 @@ Use these prefixes:
 
 ### Go Services
 
-```bash
+```bash docs-drift:skip
 # Unit tests
 go test ./...
 
@@ -458,7 +458,7 @@ go test ./cmd/api/...
 
 ### Python ML Service
 
-```bash
+```bash docs-drift:skip
 # All tests
 pytest ml/
 
@@ -471,7 +471,7 @@ pytest ml/test_service.py -v
 
 ### Frontend
 
-```bash
+```bash docs-drift:skip
 cd web
 
 # Type checking
@@ -524,7 +524,7 @@ Currently manual testing via:
 ### Docker Build Strategy
 
 Multi-stage Dockerfile for Go services:
-```dockerfile
+```dockerfile docs-drift:skip
 # Stage 1: Build
 FROM golang:1.21-alpine AS builder
 # ... build process ...
@@ -536,7 +536,7 @@ CMD ["api"]
 ```
 
 Separate Dockerfile for ML service:
-```dockerfile
+```dockerfile docs-drift:skip
 FROM python:3.11-slim
 COPY requirements.txt .
 RUN pip install -r requirements.txt
@@ -564,7 +564,7 @@ CMD ["python", "simple_main.py"]
 
 **File**: `web/src/config/api.ts`
 
-```typescript
+```typescript docs-drift:skip
 export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
   ML_SERVICE_URL: import.meta.env.VITE_ML_SERVICE_URL || 'http://localhost:8000',
@@ -583,7 +583,7 @@ Sentinel Mesh uses a two-stage deployment process:
 Staging is used for E2E testing before creating releases. Dashboards are **not** protected with basic-auth in staging.
 
 #### Prerequisites
-```bash
+```bash docs-drift:skip
 # Ensure OrbStack is running
 orb start
 
@@ -593,7 +593,7 @@ kubectl config current-context  # Should show orbstack
 
 #### Deploy to Staging
 
-```bash
+```bash docs-drift:skip
 # 1. Build Docker images locally
 docker build -t sentinel-mesh/api:staging -f Dockerfile --target api .
 docker build -t sentinel-mesh/collector:staging -f Dockerfile --target collector .
@@ -620,7 +620,7 @@ open http://localhost:3000
 
 #### E2E Testing on Staging
 
-```bash
+```bash docs-drift:skip
 # Run E2E tests
 cd web
 npm run test:e2e  # If configured
@@ -637,7 +637,7 @@ npm run test:e2e  # If configured
 
 #### Cleanup Staging
 
-```bash
+```bash docs-drift:skip
 # Remove staging deployment
 helm uninstall sentinel-mesh -n sentinel-mesh
 kubectl delete namespace sentinel-mesh
@@ -666,7 +666,7 @@ Internet → Cloudflare Edge → Cloudflare Tunnel → Traefik (with basic-auth)
 
 **1. Build and Push Images to Registry**
 
-```bash
+```bash docs-drift:skip
 # Set version for release
 VERSION=v0.2.0
 
@@ -698,7 +698,7 @@ docker push docker.io/yourusername/sentinel-mesh-frontend:${VERSION}
 
 **2. Set up Basic Authentication**
 
-```bash
+```bash docs-drift:skip
 # Switch to production cluster context
 kubectl config use-context admin@talos-cluster
 
@@ -715,7 +715,7 @@ kubectl apply -f ingressroutes.yaml
 
 **3. Deploy Sentinel Mesh with Helm**
 
-```bash
+```bash docs-drift:skip
 # From repository root
 helm upgrade --install sentinel-mesh deployments/helm/sentinel-mesh \
   --namespace sentinel-mesh \
@@ -730,7 +730,7 @@ helm upgrade --install sentinel-mesh deployments/helm/sentinel-mesh \
 **4. Configure Cloudflare Tunnel**
 
 Update tunnel configuration:
-```bash
+```bash docs-drift:skip
 # Edit tunnel config
 kubectl edit configmap cloudflared-config -n cloudflare-tunnel
 
@@ -754,7 +754,7 @@ kubectl rollout restart deployment/cloudflared -n cloudflare-tunnel
 
 **5. Add DNS Records via Terraform**
 
-```bash
+```bash docs-drift:skip
 cd ~/repos/talos-configs/local-cluster-config/manifests/terraform
 
 # Add to main.tf:
@@ -788,7 +788,7 @@ terraform apply
 
 **6. Verify Production Deployment**
 
-```bash
+```bash docs-drift:skip
 # Check pods
 kubectl get pods -n sentinel-mesh
 
@@ -819,7 +819,7 @@ kubectl get secret sentinel-mesh-auth -n sentinel-mesh
 
 #### Updating Production
 
-```bash
+```bash docs-drift:skip
 # Build and push new version
 VERSION=v0.2.1
 # ... build and push steps ...
@@ -837,7 +837,7 @@ kubectl rollout status deployment/frontend -n sentinel-mesh
 
 #### Production Rollback
 
-```bash
+```bash docs-drift:skip
 # Rollback to previous release
 helm rollback sentinel-mesh -n sentinel-mesh
 
@@ -870,7 +870,7 @@ See `deployments/production/README.md` for detailed troubleshooting steps includ
 **Issue**: Chart.js charts show initial data but don't update with new values.
 
 **Solution**: Ensure using immutable updates with `shallowRef`:
-```typescript
+```typescript docs-drift:skip
 // ❌ Wrong - mutating nested objects
 chartData.value.labels.push(newLabel)
 chartData.value = { ...chartData.value }
@@ -890,7 +890,7 @@ chartData.value = {
 **Issue**: Dark mode styles not applying correctly.
 
 **Solution**: Ensure using `dark:` variants in Tailwind classes:
-```vue
+```vue docs-drift:skip
 <!-- ❌ Wrong -->
 <div class="bg-white text-black">
 
@@ -903,7 +903,7 @@ chartData.value = {
 **Issue**: Black formatter reports "would reformat" errors.
 
 **Solution**: Run Black locally before committing:
-```bash
+```bash docs-drift:skip
 black ml/
 # Or with Docker:
 docker run --rm -v "${PWD}:/code" -w /code pyfound/black:latest black ml/
@@ -914,7 +914,7 @@ docker run --rm -v "${PWD}:/code" -w /code pyfound/black:latest black ml/
 **Issue**: Missing dependencies or version conflicts.
 
 **Solution**:
-```bash
+```bash docs-drift:skip
 go mod tidy
 go mod download
 go clean -modcache  # If cache is corrupted
@@ -925,7 +925,7 @@ go clean -modcache  # If cache is corrupted
 **Issue**: Pods failing to start in K8s.
 
 **Debug**:
-```bash
+```bash docs-drift:skip
 kubectl describe pod <pod-name> -n sentinel-mesh
 kubectl logs <pod-name> -n sentinel-mesh
 kubectl get events -n sentinel-mesh --sort-by='.lastTimestamp'

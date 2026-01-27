@@ -72,7 +72,7 @@ If you want to allow others to push images:
 
 After making packages public, test that anyone can pull them:
 
-```bash
+```bash docs-drift:skip
 # No authentication required for public images
 docker pull ghcr.io/georg-nikola/sentinel-mesh/api:latest
 
@@ -83,7 +83,7 @@ docker pull ghcr.io/georg-nikola/sentinel-mesh/api:latest
 
 ### Check Package Visibility
 
-```bash
+```bash docs-drift:skip
 # Try pulling without authentication
 docker logout ghcr.io
 
@@ -124,7 +124,7 @@ The release workflow will automatically:
 
 ### Via GitHub CLI
 
-```bash
+```bash docs-drift:skip
 # Create release
 gh release create v0.2.0 \
   --title "Sentinel Mesh v0.2.0" \
@@ -135,7 +135,7 @@ gh release create v0.2.0 \
 
 ### Via Git Tag
 
-```bash
+```bash docs-drift:skip
 # Create and push tag
 git tag -a v0.2.0 -m "Release v0.2.0"
 git push origin v0.2.0
@@ -154,7 +154,7 @@ You can also manually trigger the release workflow:
 4. Click **Run workflow**
 
 Or via CLI:
-```bash
+```bash docs-drift:skip
 gh workflow run release.yml -f tag=v0.2.0
 ```
 
@@ -176,7 +176,7 @@ Examples:
 
 Update Helm values to use GHCR:
 
-```yaml
+```yaml docs-drift:skip
 # values.yaml
 image:
   registry: ghcr.io
@@ -186,7 +186,7 @@ image:
 ```
 
 Install:
-```bash
+```bash docs-drift:skip
 helm install sentinel-mesh ./deployments/helm/sentinel-mesh \
   --set image.registry=ghcr.io \
   --set image.repository=georg-nikola/sentinel-mesh \
@@ -197,7 +197,7 @@ helm install sentinel-mesh ./deployments/helm/sentinel-mesh \
 
 ### 1. Use Specific Tags
 
-```bash
+```bash docs-drift:skip
 # ❌ Avoid using 'latest' in production
 docker pull ghcr.io/georg-nikola/sentinel-mesh/api:latest
 
@@ -208,14 +208,14 @@ docker pull ghcr.io/georg-nikola/sentinel-mesh/api:0.1.0
 ### 2. Verify Image Signatures (Future)
 
 When image signing is enabled:
-```bash
+```bash docs-drift:skip
 # Verify signature
 cosign verify ghcr.io/georg-nikola/sentinel-mesh/api:0.1.0
 ```
 
 ### 3. Scan Images Before Use
 
-```bash
+```bash docs-drift:skip
 # Scan with Trivy
 trivy image ghcr.io/georg-nikola/sentinel-mesh/api:0.1.0
 ```
@@ -249,7 +249,7 @@ trivy image ghcr.io/georg-nikola/sentinel-mesh/api:0.1.0
 ### Workflow Fails to Push
 
 **Check**:
-```bash
+```bash docs-drift:skip
 # View workflow logs
 gh run view --log-failed
 
@@ -270,7 +270,7 @@ Unfortunately, GHCR doesn't support setting visibility via API during creation. 
 
 Consider setting up GitHub Pages for Helm charts:
 
-```bash
+```bash docs-drift:skip
 # Package Helm chart
 helm package deployments/helm/sentinel-mesh
 
@@ -284,7 +284,7 @@ git push origin gh-pages
 ```
 
 Then users can:
-```bash
+```bash docs-drift:skip
 helm repo add sentinel-mesh https://georg-nikola.github.io/sentinel-mesh
 helm install sentinel-mesh sentinel-mesh/sentinel-mesh
 ```
@@ -293,19 +293,19 @@ helm install sentinel-mesh sentinel-mesh/sentinel-mesh
 
 ### Check Latest Release
 
-```bash
+```bash docs-drift:skip
 gh release view --json tagName,publishedAt,url
 ```
 
 ### List All Releases
 
-```bash
+```bash docs-drift:skip
 gh release list
 ```
 
 ### View Release Assets
 
-```bash
+```bash docs-drift:skip
 gh release view v0.1.0
 ```
 

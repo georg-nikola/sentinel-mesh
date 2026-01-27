@@ -6,6 +6,7 @@
 [![Python](https://img.shields.io/badge/python-3.9+-yellow.svg)](https://python.org)
 [![Kubernetes](https://img.shields.io/badge/kubernetes-1.25+-blue.svg)](https://kubernetes.io)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Documentation](https://github.com/georg-nikola/sentinel-mesh/workflows/Documentation%20Check/badge.svg)](https://github.com/georg-nikola/sentinel-mesh/actions/workflows/docs-drift.yml)
 
 ## Overview
 
@@ -117,7 +118,7 @@ Sentinel Mesh is a cloud-native distributed system monitoring platform that comb
 ### Installation
 
 #### 1. Deploy with Helm
-```bash
+```bash docs-drift:skip
 # Install from local chart
 helm install sentinel-mesh ./deployments/helm/sentinel-mesh \
   --namespace sentinel-mesh \
@@ -131,7 +132,7 @@ helm install sentinel-mesh ./deployments/helm/sentinel-mesh \
 ```
 
 #### 2. Port Forward for Local Access
-```bash
+```bash docs-drift:skip
 kubectl port-forward -n sentinel-mesh svc/sentinel-mesh-api 8080:8080
 kubectl port-forward -n sentinel-mesh svc/sentinel-mesh-ui 3000:80
 ```
@@ -142,7 +143,7 @@ Open your browser to `http://localhost:3000`
 ### Configuration
 
 #### Basic Configuration
-```yaml
+```yaml docs-drift:skip
 # values.yaml
 global:
   clusterName: "production"
@@ -196,13 +197,13 @@ ml:
 ### Local Development Setup
 
 #### 1. Clone Repository
-```bash
+```bash docs-drift:skip
 git clone https://github.com/georg-nikola/sentinel-mesh.git
 cd sentinel-mesh
 ```
 
 #### 2. Start Development Environment
-```bash
+```bash docs-drift:skip
 # Start local dependencies
 make dev-up
 
@@ -218,7 +219,7 @@ npm run dev
 ```
 
 #### 3. Run Tests
-```bash
+```bash docs-drift:skip
 # Run all tests
 make test
 

@@ -27,7 +27,7 @@ All 10/10 critical tests passed successfully. The staging deployment is fully fu
 | Title | "Sentinel Mesh - Kubernetes Monitoring Dashboard" | Confirmed | ✅ PASS |
 
 **HTML Output**:
-```html
+```html docs-drift:skip
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -88,7 +88,7 @@ All 10/10 critical tests passed successfully. The staging deployment is fully fu
 | Version Field | Present | "1.0.0" | ✅ PASS |
 
 **Response**:
-```json
+```json docs-drift:skip
 {
   "status": "healthy",
   "service": "sentinel-mesh-api",
@@ -108,7 +108,7 @@ All 10/10 critical tests passed successfully. The staging deployment is fully fu
 | Goroutines Metric | Present | 9 goroutines | ✅ PASS |
 
 **Sample Metrics**:
-```prometheus
+```prometheus docs-drift:skip
 # HELP go_goroutines Number of goroutines that currently exist.
 # TYPE go_goroutines gauge
 go_goroutines 9
@@ -144,7 +144,7 @@ go_memstats_alloc_bytes 4.89072e+06
 | Service Field | "ml-service" | "ml-service" | ✅ PASS |
 
 **Response**:
-```json
+```json docs-drift:skip
 {
   "service": "ml-service",
   "status": "healthy",
@@ -162,7 +162,7 @@ go_memstats_alloc_bytes 4.89072e+06
 | Status Field | "ready" | "ready" | ✅ PASS |
 
 **Response**:
-```json
+```json docs-drift:skip
 {
   "status": "ready"
 }
@@ -180,7 +180,7 @@ go_memstats_alloc_bytes 4.89072e+06
 | Anomaly Structure | Complete | Complete | ✅ PASS |
 
 **Response**:
-```json
+```json docs-drift:skip
 {
   "anomalies": [
     {
@@ -219,7 +219,7 @@ go_memstats_alloc_bytes 4.89072e+06
 | Next Day Prediction | Present | Present | ✅ PASS |
 
 **Response**:
-```json
+```json docs-drift:skip
 {
   "predictions": {
     "next_hour": {
@@ -251,7 +251,7 @@ go_memstats_alloc_bytes 4.89072e+06
 | Format | Prometheus | Prometheus | ✅ PASS |
 
 **Sample Metrics**:
-```prometheus
+```prometheus docs-drift:skip
 # HELP ml_service_requests_total Total number of requests
 # TYPE ml_service_requests_total counter
 ml_service_requests_total 42

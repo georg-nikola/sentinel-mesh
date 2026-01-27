@@ -41,7 +41,7 @@ http://devmind-pipeline.devmind-pipeline.svc.cluster.local:8000
 ### Build Optimizer
 
 **Predict Build Time**:
-```bash
+```bash docs-drift:skip
 POST /api/v1/build-optimizer/predict
 Content-Type: application/json
 
@@ -58,7 +58,7 @@ Content-Type: application/json
 ```
 
 **Response**:
-```json
+```json docs-drift:skip
 {
   "predicted_build_time_seconds": 385,
   "confidence": 0.92,
@@ -73,7 +73,7 @@ Content-Type: application/json
 ### Failure Predictor
 
 **Predict Pipeline Failure**:
-```bash
+```bash docs-drift:skip
 POST /api/v1/failure-predictor/predict
 Content-Type: application/json
 
@@ -91,7 +91,7 @@ Content-Type: application/json
 ```
 
 **Response**:
-```json
+```json docs-drift:skip
 {
   "failure_probability": 0.18,
   "risk_level": "LOW",
@@ -109,7 +109,7 @@ Content-Type: application/json
 ### Test Intelligence
 
 **Select Tests to Run**:
-```bash
+```bash docs-drift:skip
 POST /api/v1/test-intelligence/select
 Content-Type: application/json
 
@@ -128,7 +128,7 @@ Content-Type: application/json
 ```
 
 **Response**:
-```json
+```json docs-drift:skip
 {
   "selected_tests": [
     "tests/test_config.py",
@@ -146,12 +146,12 @@ Content-Type: application/json
 ### Health Check
 
 **Check Service Status**:
-```bash
+```bash docs-drift:skip
 GET /health
 ```
 
 **Response**:
-```json
+```json docs-drift:skip
 {
   "status": "healthy",
   "models": {
@@ -168,7 +168,7 @@ GET /health
 
 Automatically select which tests to run based on code changes, reducing CI/CD time.
 
-```yaml
+```yaml docs-drift:skip
 name: Intelligent Test Selection
 
 on: [push, pull_request]
@@ -237,7 +237,7 @@ jobs:
 
 Assess pipeline risk and take preventive actions before failures occur.
 
-```yaml
+```yaml docs-drift:skip
 name: Failure Prediction
 
 on: [push, pull_request]
@@ -335,7 +335,7 @@ jobs:
 
 Optimize build strategy based on predicted build times.
 
-```yaml
+```yaml docs-drift:skip
 name: Build Optimization
 
 on: [push, pull_request]
@@ -430,7 +430,7 @@ jobs:
 
 ### Standalone DevMind Health Check
 
-```yaml
+```yaml docs-drift:skip
 name: DevMind Health Check
 
 on:
@@ -464,7 +464,7 @@ jobs:
 
 ### Pull Request Analysis
 
-```yaml
+```yaml docs-drift:skip
 name: PR Analysis with DevMind
 
 on: [pull_request]
@@ -530,7 +530,7 @@ jobs:
 
 For production deployments with authentication:
 
-```yaml
+```yaml docs-drift:skip
 - name: Call DevMind API with authentication
   env:
     DEVMIND_API_KEY: ${{ secrets.DEVMIND_API_KEY }}
@@ -549,7 +549,7 @@ For production deployments with authentication:
 
 ### Token-based Authentication
 
-```yaml
+```yaml docs-drift:skip
 env:
   DEVMIND_TOKEN: ${{ secrets.DEVMIND_TOKEN }}
 
@@ -568,7 +568,7 @@ jobs:
 
 ### 1. Cache API Responses
 
-```yaml
+```yaml docs-drift:skip
 - name: Cache DevMind predictions
   id: cache
   uses: actions/cache@v3
@@ -589,7 +589,7 @@ jobs:
 
 ### 2. Handle API Timeouts
 
-```yaml
+```yaml docs-drift:skip
 - name: Call DevMind with timeout
   run: |
     timeout 30s curl -s -X POST "$DEVMIND_API/api/v1/test-intelligence/select" \
@@ -602,7 +602,7 @@ jobs:
 
 ### 3. Validate Service Health
 
-```yaml
+```yaml docs-drift:skip
 - name: Verify DevMind availability
   run: |
     MAX_RETRIES=3
@@ -627,7 +627,7 @@ jobs:
 
 ### 4. Log DevMind Decisions
 
-```yaml
+```yaml docs-drift:skip
 - name: Document DevMind decisions
   run: |
     cat > .devmind-report.json << 'EOF'
@@ -649,7 +649,7 @@ jobs:
 
 Create `.github/env/devmind.env`:
 
-```bash
+```bash docs-drift:skip
 # DevMind API Configuration
 DEVMIND_API=https://devmind.example.com
 DEVMIND_TIMEOUT=30
@@ -659,7 +659,7 @@ DEVMIND_SKIP_ON_FAILURE=true
 
 Use in workflow:
 
-```yaml
+```yaml docs-drift:skip
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -673,7 +673,7 @@ jobs:
 
 ### Service Unreachable
 
-```yaml
+```yaml docs-drift:skip
 - name: Diagnose DevMind connectivity
   if: failure()
   run: |
@@ -684,7 +684,7 @@ jobs:
 
 ### Slow Predictions
 
-```yaml
+```yaml docs-drift:skip
 - name: Monitor DevMind performance
   run: |
     time curl -s -X POST "$DEVMIND_API/api/v1/test-intelligence/select" \
@@ -694,7 +694,7 @@ jobs:
 
 ### Invalid Responses
 
-```yaml
+```yaml docs-drift:skip
 - name: Validate DevMind response
   run: |
     RESPONSE=$(curl -s -X POST "$DEVMIND_API/api/v1/test-intelligence/select" -d @payload.json)

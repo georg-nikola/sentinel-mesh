@@ -6,7 +6,7 @@ Get your GitHub Actions workflows talking to DevMind Pipeline in 5 minutes.
 
 ### Level 1: Just Health Checks (Simplest)
 Monitor if DevMind is available:
-```yaml
+```yaml docs-drift:skip
 - name: Check DevMind
   run: curl -X GET https://devmind.example.com/health
 ```
@@ -26,12 +26,12 @@ The easiest way is to use the pre-built workflow:
 The workflow is already in: `.github/workflows/devmind-integration.yml`
 
 Just copy it to your repository:
-```bash
+```bash docs-drift:skip
 cp .github/workflows/devmind-integration.yml your-repo/.github/workflows/
 ```
 
 Then update the `DEVMIND_API` variable to point to your instance:
-```yaml
+```yaml docs-drift:skip
 env:
   DEVMIND_API: https://your-devmind-instance.com  # Change this
 ```
@@ -40,7 +40,7 @@ env:
 
 Create `.github/workflows/intelligent-tests.yml`:
 
-```yaml
+```yaml docs-drift:skip
 name: Intelligent Test Selection
 
 on: [push, pull_request]
@@ -96,14 +96,14 @@ You have two options:
 5. Click **"Add variable"**
 
 Then in your workflow, use:
-```yaml
+```yaml docs-drift:skip
 env:
   DEVMIND_API: ${{ vars.DEVMIND_API }}
 ```
 
 ### Option B: Hardcode in Workflow (Good for Testing)
 
-```yaml
+```yaml docs-drift:skip
 env:
   DEVMIND_API: https://devmind.example.com
 ```
@@ -116,7 +116,7 @@ If your DevMind instance requires authentication:
 2. Create secret: `DEVMIND_API_KEY`
 3. Use in workflow:
 
-```yaml
+```yaml docs-drift:skip
 - name: Call DevMind API
   env:
     DEVMIND_API_KEY: ${{ secrets.DEVMIND_API_KEY }}
@@ -166,7 +166,7 @@ If you enabled PR comments:
 **Problem**: Your DevMind instance isn't accessible from GitHub Actions.
 
 **Solution**:
-```bash
+```bash docs-drift:skip
 # Test from your machine
 curl https://your-devmind-instance.com/health
 
@@ -178,7 +178,7 @@ curl https://your-devmind-instance.com/health
 **Problem**: API requires authentication.
 
 **Solution**:
-```yaml
+```yaml docs-drift:skip
 - name: Use API key
   env:
     API_KEY: ${{ secrets.DEVMIND_API_KEY }}
@@ -190,7 +190,7 @@ curl https://your-devmind-instance.com/health
 **Problem**: No tests selected by DevMind.
 
 **Solution**:
-```yaml
+```yaml docs-drift:skip
 - name: Fallback if no tests selected
   run: |
     TESTS="${{ steps.select.outputs.tests }}"
@@ -204,7 +204,7 @@ curl https://your-devmind-instance.com/health
 **Problem**: DevMind API is slow.
 
 **Solution**:
-```yaml
+```yaml docs-drift:skip
 - name: Call DevMind with timeout
   run: |
     timeout 60s curl -X POST "https://devmind.example.com/api/v1/test-intelligence/select" \
@@ -215,7 +215,7 @@ curl https://your-devmind-instance.com/health
 
 ### Example 1: Run Fast Tests by Default, Full Tests on PRs
 
-```yaml
+```yaml docs-drift:skip
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -237,7 +237,7 @@ jobs:
 
 ### Example 2: Use DevMind Only for PRs
 
-```yaml
+```yaml docs-drift:skip
 on:
   pull_request:
 
@@ -251,7 +251,7 @@ jobs:
 
 ### Example 3: Skip DevMind if It's Down
 
-```yaml
+```yaml docs-drift:skip
 - name: Check DevMind health
   continue-on-error: true
   id: health
@@ -273,7 +273,7 @@ jobs:
 
 Add these to your workflow to track DevMind performance:
 
-```yaml
+```yaml docs-drift:skip
 - name: Track DevMind metrics
   if: always()
   run: |

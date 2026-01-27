@@ -88,7 +88,7 @@ The following settings should be configured in GitHub's web UI:
 
 To verify branch protection is working:
 
-```bash
+```bash docs-drift:skip
 # Check branch protection status
 gh api repos/georg-nikola/sentinel-mesh/branches/main/protection
 

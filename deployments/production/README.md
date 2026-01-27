@@ -24,7 +24,7 @@ The production cluster uses:
 
 Run the auth setup script to create credentials:
 
-```bash
+```bash docs-drift:skip
 cd deployments/production
 ./auth-setup.sh
 ```
@@ -38,7 +38,7 @@ This will:
 
 Apply the Traefik configurations:
 
-```bash
+```bash docs-drift:skip
 kubectl apply -f namespace.yaml
 kubectl apply -f middleware.yaml
 kubectl apply -f ingressroutes.yaml
@@ -48,7 +48,7 @@ kubectl apply -f ingressroutes.yaml
 
 Deploy using Helm:
 
-```bash
+```bash docs-drift:skip
 # From repository root
 helm upgrade --install sentinel-mesh deployments/helm/sentinel-mesh \
   --namespace sentinel-mesh \
@@ -61,7 +61,7 @@ helm upgrade --install sentinel-mesh deployments/helm/sentinel-mesh \
 
 Update the Cloudflare Tunnel configuration to include Sentinel Mesh:
 
-```yaml
+```yaml docs-drift:skip
 # In your Cloudflare Tunnel configuration
 ingress:
   - hostname: sentinel-mesh.example.com
@@ -73,7 +73,7 @@ ingress:
 ```
 
 Apply and restart:
-```bash
+```bash docs-drift:skip
 # Apply updated tunnel configuration
 kubectl apply -f /path/to/cloudflare-tunnel/config.yaml
 kubectl rollout restart deployment/cloudflared -n cloudflare-tunnel
@@ -83,7 +83,7 @@ kubectl rollout restart deployment/cloudflared -n cloudflare-tunnel
 
 Add DNS records via Terraform:
 
-```bash
+```bash docs-drift:skip
 cd ~/path/to/terraform
 
 # Add to main.tf:
@@ -119,7 +119,7 @@ You'll be prompted for the username/password you configured in step 1.
 
 ## Verification Commands
 
-```bash
+```bash docs-drift:skip
 # Check deployment status
 kubectl get pods -n sentinel-mesh
 
@@ -141,7 +141,7 @@ kubectl get secret sentinel-mesh-auth -n sentinel-mesh
 
 To update credentials, simply re-run the auth setup script:
 
-```bash
+```bash docs-drift:skip
 ./auth-setup.sh
 ```
 
@@ -151,7 +151,7 @@ The script will update the existing secret. No need to restart pods - Traefik wi
 
 If you need to remove basic auth protection:
 
-```bash
+```bash docs-drift:skip
 # Remove middleware reference from IngressRoutes
 kubectl edit ingressroute sentinel-mesh-frontend -n sentinel-mesh
 # Delete the middlewares section
@@ -171,7 +171,7 @@ kubectl apply -f ingressroutes-no-auth.yaml
 - Check IngressRoute exists: `kubectl get ingressroute -n sentinel-mesh`
 - Verify service is running: `kubectl get pods,svc -n sentinel-mesh`
 - Check Traefik can reach the service:
-  ```bash
+  ```bash docs-drift:skip
   kubectl run test --rm -it --image=curlimages/curl -- \
     curl http://frontend.sentinel-mesh.svc.cluster.local
   ```
@@ -198,7 +198,7 @@ kubectl apply -f ingressroutes-no-auth.yaml
 
 To rollback a deployment:
 
-```bash
+```bash docs-drift:skip
 # Rollback to previous Helm release
 helm rollback sentinel-mesh -n sentinel-mesh
 

@@ -1,0 +1,18 @@
+version: 1
+
+docs:
+  paths:
+    - README.md
+    - CLAUDE.md
+    - "*.md"
+    - docs/**/*.md
+    - .github/**/*.md
+    - deployments/**/*.md
+    - tests/**/*.md
+
+checks:
+  code_blocks:
+    enabled: true
+    languages:
+      - bash
+    timeout: 30s

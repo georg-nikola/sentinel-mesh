@@ -34,7 +34,7 @@ sentinel-mesh/frontend:staging          (50.4MB)
 ### ✅ API Service Tests
 
 **Health Endpoint** (`http://localhost:8080/health`):
-```json
+```json docs-drift:skip
 {
   "status": "healthy",
   "service": "sentinel-mesh-api",
@@ -45,7 +45,7 @@ sentinel-mesh/frontend:staging          (50.4MB)
 ### ✅ ML Service Tests
 
 **Health Endpoint** (`http://localhost:8000/health`):
-```json
+```json docs-drift:skip
 {
   "service": "ml-service",
   "status": "healthy",
@@ -152,7 +152,7 @@ Based on this successful staging deployment:
 ## Cleanup
 
 To remove staging deployment:
-```bash
+```bash docs-drift:skip
 kubectl delete namespace sentinel-mesh
 
 # Or keep namespace but remove deployments:

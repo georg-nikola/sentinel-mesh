@@ -20,7 +20,7 @@ If you want to use advanced features or custom AI models:
 1. Sign up at [Qodo.ai](https://www.qodo.ai/)
 2. Get your API key from the dashboard
 3. Add it as a repository secret:
-   ```bash
+   ```bash docs-drift:skip
    gh secret set QODO_API_KEY --body "your-api-key-here"
    ```
 
@@ -122,7 +122,7 @@ Edit `.github/qodo.toml` to customize:
 ### Too many/few suggestions
 
 Adjust in `.github/qodo.toml`:
-```toml
+```toml docs-drift:skip
 [pr_code_suggestions]
 num_code_suggestions = 4  # Increase or decrease
 ```

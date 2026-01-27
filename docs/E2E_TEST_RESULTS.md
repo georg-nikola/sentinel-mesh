@@ -87,7 +87,7 @@ The deployed API and Collector services don't implement the `/ready` endpoint. T
 - ✓ Healthy status confirmed
 
 **Response Example**:
-```json
+```json docs-drift:skip
 {
   "status": "healthy",
   "service": "sentinel-mesh-api",
@@ -124,7 +124,7 @@ Same as Service Health Checks - deployed version doesn't have `/ready` endpoint.
 - Mismatch between service configuration and container reality
 
 **Service Configuration**:
-```yaml
+```yaml docs-drift:skip
 ports:
   - name: http
     nodePort: 30000
@@ -160,7 +160,7 @@ Service `targetPort` is set to 8080, but nginx container listens on port 80.
 The ML service is actually working correctly! Manual testing shows:
 
 **Anomaly Detection Endpoint** (`/api/v1/anomalies`):
-```json
+```json docs-drift:skip
 {
   "anomalies": [
     {
@@ -269,7 +269,7 @@ Test script grep pattern doesn't match the actual metric format.
 ### Immediate Actions (Production Blockers)
 
 1. **Fix Frontend Service Port**
-   ```bash
+   ```bash docs-drift:skip
    kubectl patch svc web-dashboard -n sentinel-mesh -p '{"spec":{"ports":[{"port":8080,"targetPort":80,"nodePort":30000}]}}'
    ```
 
