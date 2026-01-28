@@ -406,7 +406,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: e2e-infrastructure-test-results
           path: /tmp/e2e-test-results.txt
