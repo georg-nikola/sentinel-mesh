@@ -1,6 +1,6 @@
 ---
 # Sentinel Mesh Frontend IngressRoute
-# Authentication handled by Cloudflare Zero Trust Access
+# Authentication: Authentik forwardAuth SSO
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -13,12 +13,22 @@ spec:
   routes:
   - match: Host(`sentinel-mesh.example.com`)
     kind: Rule
+    middlewares:
+    - name: authentik-forwardauth
+      namespace: authentik
     services:
     - name: frontend
       port: 80
+  - match: Host(`sentinel-mesh.example.com`) && PathPrefix(`/outpost.goauthentik.io/`)
+    kind: Rule
+    priority: 15
+    services:
+    - name: authentik-server
+      namespace: authentik
+      port: 80
 ---
 # Sentinel Mesh API IngressRoute
-# Authentication handled by Cloudflare Zero Trust Access
+# Authentication: Authentik forwardAuth SSO
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -31,6 +41,16 @@ spec:
   routes:
   - match: Host(`sentinel-mesh-api.example.com`)
     kind: Rule
+    middlewares:
+    - name: authentik-forwardauth
+      namespace: authentik
     services:
     - name: api
       port: 8080
+  - match: Host(`sentinel-mesh-api.example.com`) && PathPrefix(`/outpost.goauthentik.io/`)
+    kind: Rule
+    priority: 15
+    services:
+    - name: authentik-server
+      namespace: authentik
+      port: 80
