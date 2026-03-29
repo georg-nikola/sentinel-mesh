@@ -1,44 +1,44 @@
 # Core ML and data processing
-tensorflow==2.15.0
-scikit-learn==1.3.0
+tensorflow==2.20.0
+scikit-learn==1.8.0
 numpy==1.24.3
 pandas==2.0.3
-scipy==1.11.1
+scipy==1.17.0
 
 # API and web framework
 flask==3.1.2
 flask-cors==4.0.0
-requests==2.31.0
+requests==2.32.5
 
 # Kafka client
-kafka-python==2.0.2
+kafka-python==2.3.0
 
 # Database clients
-influxdb-client==1.37.0
+influxdb-client==1.50.0
 elasticsearch==8.8.2
 redis==4.6.0
 
 # Monitoring and logging
-prometheus-client==0.17.1
+prometheus-client==0.24.1
 structlog==23.1.0
 
 # Data visualization and analysis
-matplotlib==3.7.2
-seaborn==0.12.2
+matplotlib==3.10.8
+seaborn==0.13.2
 plotly==5.15.0
 
 # Model serialization and management
-joblib==1.3.1
-dill==0.3.7
+joblib==1.5.3
+dill==0.4.1
 
 # Configuration and environment
-pydantic==2.4.2
-python-dotenv==1.0.0
-pyyaml==6.0.1
+pydantic==2.12.5
+python-dotenv==1.2.1
+pyyaml==6.0.3
 
 # Time series analysis
-statsmodels==0.14.0
-prophet==1.1.4
+statsmodels==0.14.6
+prophet==1.3.0
 
 # Anomaly detection libraries
 pyod==1.1.0
@@ -46,9 +46,9 @@ pyod==1.1.0
 # Testing
 pytest==7.4.0
 pytest-asyncio==0.21.1
-pytest-mock==3.11.1
+pytest-mock==3.15.1
 
 # Development tools
 black==23.7.0
 flake8==6.0.0
-mypy==1.5.1
+mypy==1.19.1
